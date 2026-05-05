@@ -1,54 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - VKU Project Full Version</title>
+    <title>VKU WebAR - Hệ Thống Thiết Kế Nội Thất</title>
     <style>
-        body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', sans-serif; background: #000; }
         
-        #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-size: 15px; font-weight: bold; pointer-events: none; z-index: 10; padding: 0 10px; box-sizing: border-box;}
+        #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 4px rgba(0,0,0,0.8); font-size: 14px; font-weight: bold; pointer-events: none; z-index: 10; padding: 0 10px; box-sizing: border-box; }
 
-        #loading-spinner { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; z-index: 20; }
+        #loading-spinner { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid #4caf50; border-radius: 50%; animation: spin 1s linear infinite; z-index: 20; }
         @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
-        #item-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.6); padding: 12px; border-radius: 20px; z-index: 10; white-space: nowrap; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); max-width: 90vw; scroll-behavior: smooth;}
-        .item-btn { background: #fff; border: 3px solid transparent; padding: 10px 20px; margin: 0 5px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: inline-block; }
-        .item-btn:active { transform: scale(0.95); }
+        #item-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.7); padding: 12px; border-radius: 20px; z-index: 10; white-space: nowrap; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(8px); max-width: 90vw; scroll-behavior: smooth; border: 1px solid rgba(255,255,255,0.1); }
+        .item-btn { background: #fff; border: 3px solid transparent; padding: 10px 18px; margin: 0 5px; border-radius: 12px; font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.2s; display: inline-block; }
         .item-btn.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
 
-        #edit-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 20px; z-index: 20; box-shadow: 0 10px 25px rgba(0,0,0,0.3); backdrop-filter: blur(10px); width: 85vw; max-width: 400px;}
-        .edit-title { margin-bottom: 12px; font-size: 14px; font-weight: bold; color: #333; text-align: center;}
-        
-        .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; font-size: 14px; font-weight: bold;}
+        #edit-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 20px; z-index: 20; box-shadow: 0 10px 25px rgba(0,0,0,0.4); backdrop-filter: blur(10px); width: 85vw; max-width: 380px; }
+        .edit-title { margin-bottom: 12px; font-size: 13px; font-weight: bold; color: #333; text-align: center; text-transform: uppercase; }
+        .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; font-size: 14px; color: #333; }
         .slider-row input { flex-grow: 1; accent-color: #4caf50; }
-        
-        .edit-controls { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 15px;}
-        .edit-btn { flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .edit-controls { display: flex; gap: 12px; margin-top: 15px; }
+        .edit-btn { flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; }
         #btn-delete { background: #ff4d4d; color: white; }
         #btn-done { background: #4caf50; color: white; }
     </style>
 </head>
 <body>
-    <div id="status-bar">Đang tải dữ liệu hệ thống...</div>
+    <div id="status-bar">Đang tải dữ liệu từ Cloud...</div>
     <div id="loading-spinner"></div>
-
-    <!-- Dữ liệu được đổ vào đây từ Firebase -->
     <div id="item-menu"></div>
 
     <div id="edit-menu">
-        <div class="edit-title">Chạm sàn/tường ảo để dời vật</div>
+        <div class="edit-title">Hiệu chỉnh vật thể</div>
         <div class="slider-row">
             <label>Xoay:</label>
             <input type="range" id="slider-rotate" min="0" max="360" value="0">
         </div>
         <div class="slider-row">
             <label>Cao:</label>
-            <input type="range" id="slider-height" min="-0.5" max="2.5" step="0.05" value="0">
+            <input type="range" id="slider-height" min="-1.0" max="3.0" step="0.05" value="0">
         </div>
         <div class="edit-controls">
             <button id="btn-delete" class="edit-btn">Xóa</button>
-            <button id="btn-done" class="edit-btn">Xong</button>
+            <button id="btn-done" class="edit-btn">Hoàn tất</button>
         </div>
     </div>
 
@@ -68,7 +63,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // Firebase Config
+        // --- CẤU HÌNH FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCQjyaUgKxHqgfW3aaxsgwxUfOPePCkVVA",
             authDomain: "vku-ar-project.firebaseapp.com",
@@ -81,6 +76,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // --- BIẾN TOÀN CỤC ---
         let container, camera, scene, renderer, controller, reticle;
         let hitTestSource = null, hitTestSourceRequested = false;
         let planeFound = false, currentModelPath = null; 
@@ -95,172 +91,147 @@
 
         init();
         animate();
-        fetchFirebaseModels();
+        loadMenuFromFirebase();
 
-        // 1. CHỨC NĂNG LẤY DỮ LIỆU FIREBASE (THAY THẾ LIST CỨNG)
-        async function fetchFirebaseModels() {
+        async function loadMenuFromFirebase() {
             try {
-                const querySnapshot = await getDocs(collection(db, "models"));
+                const snapshot = await getDocs(collection(db, "models"));
                 const menu = document.getElementById('item-menu');
                 menu.innerHTML = ''; 
 
-                querySnapshot.forEach((doc) => {
+                snapshot.forEach((doc) => {
                     const data = doc.data();
                     const btn = document.createElement('button');
                     btn.className = 'item-btn';
                     btn.innerText = data.name;
                     btn.setAttribute('data-model', data.url);
                     
-                    // Gán ID đặc biệt cho căn phòng
-                    if (data.name.toLowerCase().includes("phòng") || data.url.includes("PHONGVE3D")) {
+                    if (data.url.includes('PHONGVE3D') || data.name.toLowerCase().includes("phòng")) {
                         btn.id = 'btn-room';
                     }
 
                     btn.addEventListener('click', (e) => {
-                        const allBtns = document.querySelectorAll('.item-btn');
-                        allBtns.forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
                         e.target.classList.add('active');
                         currentModelPath = e.target.getAttribute('data-model');
-                        
                         if(activeObject) closeEditMode();
                         
-                        if (currentModelPath.includes('PHONGVE3D')) {
-                            document.getElementById('status-bar').innerText = "Vui lòng quét mặt sàn THẬT để đặt phòng.";
-                        } else {
-                            document.getElementById('status-bar').innerText = mainRoom ? "Hãy trỏ camera vào bên trong Phòng 3D để đặt vật." : "Đã chọn vật phẩm. Chạm vào vòng xanh để đặt.";
-                        }
+                        document.getElementById('status-bar').innerText = currentModelPath.includes('PHONGVE3D') 
+                            ? "Hãy quét sàn thật để đặt Căn phòng." 
+                            : (mainRoom ? "Trỏ vào bên trong phòng ảo để đặt vật." : "Chạm vòng xanh để đặt vật.");
                     });
                     menu.appendChild(btn);
                 });
-            } catch (e) {
-                console.error("Lỗi Firebase:", e);
-            }
+            } catch (e) { console.error("Lỗi tải menu:", e); }
         }
 
         function init() {
-            container = document.createElement( 'div' );
-            document.body.appendChild( container );
+            container = document.createElement('div');
+            document.body.appendChild(container);
 
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 20);
 
-            const ambientLight = new THREE.AmbientLight( 0xffffff, 1.5 );
-            scene.add( ambientLight );
+            scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            dirLight.position.set(2, 5, 2);
+            scene.add(dirLight);
 
-            const dirLight = new THREE.DirectionalLight( 0xffffff, 1.5 );
-            dirLight.position.set( 2, 5, 2 );
-            scene.add( dirLight );
-
-            renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-            renderer.setPixelRatio( Math.min(window.devicePixelRatio, 2) );
-            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.xr.enabled = true;
-            container.appendChild( renderer.domElement );
+            container.appendChild(renderer.domElement);
 
-            document.body.appendChild( ARButton.createButton( renderer, { 
-                requiredFeatures: ['hit-test'],
-                optionalFeatures: ['dom-overlay'],
-                domOverlay: { root: document.body }
-            } ) );
+            document.body.appendChild(ARButton.createButton(renderer, { 
+                requiredFeatures: ['hit-test'], 
+                optionalFeatures: ['dom-overlay'], 
+                domOverlay: { root: document.body } 
+            }));
 
-            const ringGeo = new THREE.RingGeometry( 0.1, 0.15, 32 ).rotateX( - Math.PI / 2 );
-            reticle = new THREE.Mesh( ringGeo, new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.DoubleSide } ) );
+            const ringGeo = new THREE.RingGeometry(0.1, 0.14, 32).rotateX(-Math.PI/2);
+            reticle = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide }));
             reticle.matrixAutoUpdate = false;
             reticle.visible = false;
-            scene.add( reticle );
+            scene.add(reticle);
 
-            controller = renderer.xr.getController( 0 );
-            controller.addEventListener( 'select', onSelect );
-            scene.add( controller );
+            controller = renderer.xr.getController(0);
+            controller.addEventListener('select', onSelect);
+            scene.add(controller);
 
             setupUI();
             setupGestures();
-            window.addEventListener( 'resize', onWindowResize );
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
         }
 
         function onSelect() {
             if (!reticle.visible || isClickingUI) return;
 
-            const tempMatrix = new THREE.Matrix4().identity().extractRotation( controller.matrixWorld );
-            raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-            raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+            const tempMatrix = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
-            const objectsToIntersect = placedObjects.filter(obj => obj !== mainRoom);
-            const intersects = raycaster.intersectObjects( objectsToIntersect, true );
+            const intersects = raycaster.intersectObjects(placedObjects.filter(o => o !== mainRoom), true);
 
-            if ( intersects.length > 0 ) {
-                let selectedMesh = intersects[0].object;
-                while (selectedMesh.parent && !placedObjects.includes(selectedMesh)) selectedMesh = selectedMesh.parent;
-                
-                if (placedObjects.includes(selectedMesh)) {
-                    activeObject === selectedMesh ? closeEditMode() : openEditMode(selectedMesh);
-                    return; 
+            if (intersects.length > 0) {
+                let obj = intersects[0].object;
+                while (obj.parent && !placedObjects.includes(obj)) obj = obj.parent;
+                if (placedObjects.includes(obj)) {
+                    activeObject === obj ? closeEditMode() : openEditMode(obj);
+                    return;
                 }
             }
 
-            if ( activeObject ) {
-                activeObject.position.setFromMatrixPosition( reticle.matrix );
+            if (activeObject) {
+                activeObject.position.setFromMatrixPosition(reticle.matrix);
                 activeObject.position.y += (activeObject.userData.offsetY || 0);
-                document.getElementById('status-bar').innerText = "Đã dời vật. Bấm Xong để chốt vị trí.";
                 return;
             }
 
-            if ( currentModelPath ) {
-                document.getElementById('status-bar').innerText = "Đang tải...";
+            if (currentModelPath) {
                 document.getElementById('loading-spinner').style.display = "block";
-                
-                const isPlacingRoom = currentModelPath.includes('PHONGVE3D');
+                const isRoom = currentModelPath.includes('PHONGVE3D');
 
-                gltfLoader.load(currentModelPath, function(gltf) {
+                gltfLoader.load(currentModelPath, (gltf) => {
                     const model = gltf.scene;
                     
-                    model.traverse((child) => {
-                        if (child.isMesh) {
-                            child.geometry.computeBoundingBox();
-                            if (child.material) child.material.side = THREE.DoubleSide; 
-                        }
-                    });
+                    // --- FIX LỖI LÚN VẬT THỂ ---
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
 
-                    // Logic tính toán tỷ lệ (giữ nguyên của bạn)
-                    const initialBox = new THREE.Box3().setFromObject(model);
-                    const size = initialBox.getSize(new THREE.Vector3());
-                    const maxDimension = Math.max(size.x, size.y, size.z);
+                    // Đẩy model lên sao cho đáy (min.y) nằm đúng y=0 của Wrapper
+                    model.position.set(-center.x, -box.min.y, -center.z);
 
-                    if (maxDimension > 1.0 && !isPlacingRoom) {
-                        model.scale.multiplyScalar(0.5 / maxDimension);
-                    } else if (maxDimension < 0.05 && !isPlacingRoom) {
-                        model.scale.multiplyScalar(0.2 / maxDimension);
+                    if (Math.max(size.x, size.y, size.z) > 1.0 && !isRoom) {
+                        model.scale.multiplyScalar(0.5 / Math.max(size.x, size.y, size.z));
                     }
 
-                    const scaledBox = new THREE.Box3().setFromObject(model);
-                    const center = scaledBox.getCenter(new THREE.Vector3());
-                    model.position.set(-center.x, -scaledBox.min.y, -center.z);
-
                     const wrapper = new THREE.Group();
-                    wrapper.position.setFromMatrixPosition( reticle.matrix );
-                    if(!isPlacingRoom) wrapper.quaternion.setFromRotationMatrix( reticle.matrix );
+                    wrapper.position.setFromMatrixPosition(reticle.matrix);
+                    if (!isRoom) wrapper.quaternion.setFromRotationMatrix(reticle.matrix);
                     
                     wrapper.userData.offsetY = 0;
                     wrapper.add(model);
                     scene.add(wrapper);
                     placedObjects.push(wrapper);
 
-                    if (isPlacingRoom) {
+                    if (isRoom) {
                         mainRoom = wrapper;
                         mainRoom.updateMatrixWorld(true);
-                        const roomBox = new THREE.Box3().setFromObject(mainRoom);
-                        mainRoom.userData.box = roomBox;
-                        document.getElementById('status-bar').innerText = "Đã đặt phòng! Trỏ vào mặt bàn/sàn ảo để đặt vật.";
-                        const btn = document.getElementById('btn-room');
-                        if(btn) btn.style.display = 'none';
+                        mainRoom.userData.box = new THREE.Box3().setFromObject(mainRoom);
+                        if(document.getElementById('btn-room')) document.getElementById('btn-room').style.display = 'none';
                         currentModelPath = null;
-                    } else {
-                        document.getElementById('status-bar').innerText = "Chạm vật để sửa hoặc chọn vật tiếp theo.";
+                        document.getElementById('status-bar').innerText = "Phòng đã khóa. Đang dùng sàn ảo.";
                     }
 
-                    if (gltf.animations && gltf.animations.length > 0) {
+                    if (gltf.animations?.length) {
                         const mixer = new THREE.AnimationMixer(model);
-                        gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+                        gltf.animations.forEach(c => mixer.clipAction(c).play());
                         mixers.push(mixer);
                     }
                     document.getElementById('loading-spinner').style.display = "none";
@@ -270,48 +241,45 @@
 
         function setupUI() {
             const lock = () => { isClickingUI = true; };
-            const unlock = () => { setTimeout(() => { isClickingUI = false; }, 300); };
-            const uis = [document.getElementById('item-menu'), document.getElementById('edit-menu')];
+            const unlock = () => { setTimeout(() => isClickingUI = false, 300); };
             
-            uis.forEach(ui => {
+            [document.getElementById('item-menu'), document.getElementById('edit-menu')].forEach(ui => {
                 ui.addEventListener('pointerdown', lock);
                 ui.addEventListener('pointerup', unlock);
-                ui.addEventListener('beforexrselect', (e) => e.preventDefault());
+                ui.addEventListener('beforexrselect', e => e.preventDefault());
             });
 
-            document.getElementById('btn-delete').addEventListener('click', () => {
+            document.getElementById('btn-delete').onclick = () => {
                 if (activeObject) {
                     if (activeObject === mainRoom) {
                         mainRoom = null;
-                        document.getElementById('btn-room').style.display = 'inline-block';
+                        if(document.getElementById('btn-room')) document.getElementById('btn-room').style.display = 'inline-block';
                     }
                     scene.remove(activeObject);
                     placedObjects.splice(placedObjects.indexOf(activeObject), 1);
                     closeEditMode();
                 }
-            });
+            };
 
-            document.getElementById('btn-done').addEventListener('click', closeEditMode);
-            
-            document.getElementById('slider-rotate').addEventListener('input', (e) => {
-                if (activeObject) activeObject.rotation.y = THREE.MathUtils.degToRad(e.target.value);
-            });
-
-            document.getElementById('slider-height').addEventListener('input', (e) => {
-                if (activeObject) {
-                    const newH = parseFloat(e.target.value);
-                    activeObject.position.y += (newH - (activeObject.userData.offsetY || 0));
-                    activeObject.userData.offsetY = newH;
+            document.getElementById('btn-done').onclick = closeEditMode;
+            document.getElementById('slider-rotate').oninput = e => {
+                if(activeObject) activeObject.rotation.y = THREE.MathUtils.degToRad(e.target.value);
+            };
+            document.getElementById('slider-height').oninput = e => {
+                if(activeObject) {
+                    const h = parseFloat(e.target.value);
+                    activeObject.position.y += (h - (activeObject.userData.offsetY || 0));
+                    activeObject.userData.offsetY = h;
                 }
-            });
+            };
         }
 
-        function openEditMode(object) {
-            activeObject = object;
+        function openEditMode(obj) {
+            activeObject = obj;
             document.getElementById('edit-menu').style.display = 'block';
-            document.getElementById('item-menu').style.display = 'none'; 
-            document.getElementById('slider-rotate').value = THREE.MathUtils.radToDeg(activeObject.rotation.y);
-            document.getElementById('slider-height').value = activeObject.userData.offsetY || 0;
+            document.getElementById('item-menu').style.display = 'none';
+            document.getElementById('slider-rotate').value = THREE.MathUtils.radToDeg(obj.rotation.y);
+            document.getElementById('slider-height').value = obj.userData.offsetY || 0;
         }
 
         function closeEditMode() {
@@ -321,75 +289,63 @@
         }
 
         function setupGestures() {
-            document.body.addEventListener('touchstart', (e) => {
-                if (isClickingUI) return; 
-                if (e.touches.length === 2 && activeObject) {
-                    initialPinchDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-                    initialScale = activeObject.scale.x; 
-                }
+            document.body.addEventListener('touchstart', e => {
+                if (isClickingUI || e.touches.length !== 2 || !activeObject) return;
+                initialPinchDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                initialScale = activeObject.scale.x;
             }, { passive: false });
 
-            document.body.addEventListener('touchmove', (e) => {
+            document.body.addEventListener('touchmove', e => {
                 if (isClickingUI || e.touches.length !== 2 || !activeObject) return;
-                e.preventDefault(); 
+                e.preventDefault();
                 const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
                 activeObject.scale.setScalar(initialScale * (dist / initialPinchDistance));
             }, { passive: false });
         }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize( window.innerWidth, window.innerHeight );
-        }
+        function animate() { renderer.setAnimationLoop(render); }
 
-        function animate() { renderer.setAnimationLoop( render ); }
-
-        function render( timestamp, frame ) {
+        function render(timestamp, frame) {
             const delta = clock.getDelta();
             mixers.forEach(m => m.update(delta));
 
-            if ( frame ) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
+            if (frame) {
+                const refSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
                 if (!mainRoom) {
-                    if ( !hitTestSourceRequested ) {
-                        session.requestReferenceSpace( 'viewer' ).then( (ref) => {
-                            session.requestHitTestSource( { space: ref } ).then( (src) => hitTestSource = src );
-                        } );
+                    if (!hitTestSourceRequested) {
+                        session.requestReferenceSpace('viewer').then(ref => {
+                            session.requestHitTestSource({ space: ref }).then(src => hitTestSource = src);
+                        });
                         hitTestSourceRequested = true;
                     }
-                    if ( hitTestSource ) {
-                        const results = frame.getHitTestResults( hitTestSource );
-                        if ( results.length > 0 ) {
+                    if (hitTestSource) {
+                        const results = frame.getHitTestResults(hitTestSource);
+                        if (results.length > 0) {
                             reticle.visible = true;
-                            reticle.matrix.fromArray( results[0].getPose( referenceSpace ).transform.matrix );
+                            reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
                             if (!planeFound) {
                                 planeFound = true;
                                 document.getElementById('item-menu').style.display = 'block';
-                                document.getElementById('status-bar').innerText = "Đã thấy sàn! Hãy đặt phòng trước.";
+                                document.getElementById('status-bar').innerText = "Đã thấy sàn! Hãy đặt phòng thiết kế.";
                             }
                         } else reticle.visible = false;
                     }
                 } else {
-                    // Logic Raycast lên mainRoom (giữ nguyên của bạn)
-                    const tempMatrix = new THREE.Matrix4().identity().extractRotation( controller.matrixWorld );
-                    raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-                    raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+                    const tempM = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
+                    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+                    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempM);
                     const intersects = raycaster.intersectObject(mainRoom, true);
-
                     if (intersects.length > 0) {
                         reticle.visible = true;
                         const pt = intersects[0].point;
                         if (mainRoom.userData.box) pt.clamp(mainRoom.userData.box.min, mainRoom.userData.box.max);
-                        const worldNormal = intersects[0].face.normal.clone().transformDirection(intersects[0].object.matrixWorld).normalize();
-                        const dummyQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
-                        reticle.matrix.compose(pt, dummyQuat, new THREE.Vector3(1,1,1));
+                        reticle.matrix.makeTranslation(pt.x, pt.y, pt.z);
                     } else reticle.visible = false;
                 }
             }
-            renderer.render( scene, camera );
+            renderer.render(scene, camera);
         }
     </script>
 </body>
