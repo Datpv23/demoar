@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Khóa Không Gian & Fix Lỗi UI</title>
+    <title>WebAR - Khóa Không Gian & Fix UI</title>
     <style>
         body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
@@ -237,16 +237,28 @@
                     scene.add(wrapper);
                     placedObjects.push(wrapper);
 
-                    // LOGIC CHỈ ĐẶT 1 PHÒNG
                     if (isPlacingRoom) {
                         mainRoom = wrapper;
+                        
+                        // TẠO BỨC TƯỜNG VÔ HÌNH (Bounding Box)
+                        mainRoom.updateMatrixWorld(true);
+                        const roomBox = new THREE.Box3().setFromObject(mainRoom);
+                        
+                        // Thu hẹp hộp giới hạn lại 5% để không cho đồ vật lọt ra ngoài mép
+                        const boxSize = roomBox.getSize(new THREE.Vector3());
+                        roomBox.min.x += boxSize.x * 0.05;
+                        roomBox.max.x -= boxSize.x * 0.05;
+                        roomBox.min.z += boxSize.z * 0.05;
+                        roomBox.max.z -= boxSize.z * 0.05;
+                        
+                        mainRoom.userData.box = roomBox;
+
                         document.getElementById('status-bar').innerText = "Đã vào phòng 3D! Trỏ camera lên bàn/tủ ảo để đặt vật phẩm.";
                         
-                        // Ẩn nút đặt phòng và bỏ chọn nó
                         const btnRoom = document.getElementById('btn-room');
                         btnRoom.style.display = 'none';
                         btnRoom.classList.remove('active');
-                        currentModelPath = null; // Khóa lệnh đặt thêm
+                        currentModelPath = null; 
                     } else {
                         document.getElementById('status-bar').innerText = "Chạm nội thất để sửa, hoặc chọn vật khác để đặt tiếp";
                     }
@@ -266,7 +278,7 @@
         }
 
         function setupUI() {
-            // KHẮC PHỤC LỖI BẤM UI BỊ XUYÊN XUỐNG KHÔNG GIAN 3D
+            // FIX LỖI: Chặn click xuyên qua UI xuống không gian AR
             const preventARSelect = (e) => { e.preventDefault(); };
             document.getElementById('item-menu').addEventListener('beforexrselect', preventARSelect);
             document.getElementById('edit-menu').addEventListener('beforexrselect', preventARSelect);
@@ -297,7 +309,7 @@
                 if (activeObject) {
                     if (activeObject === mainRoom) {
                         mainRoom = null; 
-                        document.getElementById('btn-room').style.display = 'inline-block'; // Hiện lại nút phòng
+                        document.getElementById('btn-room').style.display = 'inline-block'; 
                         document.getElementById('status-bar').innerText = "Đã xóa phòng. Hệ thống trở về quét mặt sàn thật.";
                     }
                     
@@ -438,8 +450,14 @@
                         const hitPoint = intersects[0].point;
                         const worldNormal = intersects[0].face.normal.clone().transformDirection(intersects[0].object.matrixWorld).normalize();
                         
-                        const dummyMatrix = new THREE.Matrix4();
                         const dummyPosition = new THREE.Vector3().copy(hitPoint);
+                        
+                        // KÍCH HOẠT TƯỜNG VÔ HÌNH: Ép điểm chạm không được thoát ra ngoài phòng
+                        if (mainRoom && mainRoom.userData.box) {
+                            dummyPosition.clamp(mainRoom.userData.box.min, mainRoom.userData.box.max);
+                        }
+
+                        const dummyMatrix = new THREE.Matrix4();
                         const dummyQuaternion = new THREE.Quaternion();
                         dummyQuaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
                         
