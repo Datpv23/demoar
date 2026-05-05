@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR – Nội Thất 3D Pro</title>
+    <title>WebAR – Nội Thất 3D Pro x Firebase</title>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,7 +45,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Item menu ── */
+        /* ── Item menu (Giữ nguyên thanh ngang) ── */
         #item-menu {
             position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
             display: none; background: var(--surface); backdrop-filter: blur(18px);
@@ -60,7 +60,7 @@
             background: var(--glass); border: 1.5px solid var(--border);
             color: var(--text); padding: 9px 16px; margin: 0 3px;
             border-radius: 10px; font-weight: 600; font-size: 13px;
-            cursor: pointer; white-space: nowrap; outline: none;
+            cursor: pointer; white-space: nowrap; outline: none; transition: 0.2s;
         }
         .item-btn.active { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); }
 
@@ -102,21 +102,17 @@
 </head>
 <body>
 
-<div id="status-bar">Đang khởi động AR…</div>
+<div id="status-bar">Đang khởi động AR & Tải dữ liệu...</div>
 <div id="spinner"><div class="spin-ring"></div></div>
 
 <div id="item-menu">
-    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">🏠 Phòng 3D</button>
-    <button class="item-btn" data-model="models/bang.glb">🪑 Bảng</button>
-    <button class="item-btn" data-model="models/bangv.glb">📋 Bảng V</button>
-    <button class="item-btn" data-model="models/BINHCAFE.glb">☕ Bình Cafe</button>
-    <button class="item-btn" data-model="models/gom1.glb">🏺 Gốm 1</button>
-    <button class="item-btn" data-model="models/gom2.glb">🏺 Gốm 2</button>
+    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">
+        <span style="font-size: 16px;">🏠</span> Phòng 3D
+    </button>
 </div>
 
 <div id="edit-panel">
     <div class="panel-title">Chỉnh sửa vật thể</div>
-
     <div class="slider-row">
         <span class="slider-label">Xoay X</span>
         <input type="range" id="sl-rotate-x" min="-180" max="180" value="0" step="1">
@@ -132,19 +128,16 @@
         <input type="range" id="sl-rotate-z" min="-180" max="180" value="0" step="1">
         <span class="slider-value" id="val-rotate-z">0°</span>
     </div>
-
     <div class="slider-row">
         <span class="slider-label">Nổi/Cao</span>
         <input type="range" id="sl-height" min="-0.5" max="2.5" step="0.01" value="0">
         <span class="slider-value" id="val-height">0m</span>
     </div>
-
     <div class="slider-row">
         <span class="slider-label">To</span>
         <input type="range" id="sl-scale" min="0.05" max="5" step="0.01" value="1">
         <span class="slider-value" id="val-scale">1×</span>
     </div>
-
     <div class="btn-row">
         <button id="btn-delete" class="act-btn">🗑 Xóa</button>
         <button id="btn-done"   class="act-btn">✓ Xong</button>
@@ -164,6 +157,22 @@
 import * as THREE from 'three';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// --- IMPORT FIREBASE ---
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCQjyaUgKxHqgfW3aaxsgwxUfOPePCkVVA",
+    authDomain: "vku-ar-project.firebaseapp.com",
+    projectId: "vku-ar-project",
+    storageBucket: "vku-ar-project.firebasestorage.app",
+    messagingSenderId: "595437202444",
+    appId: "1:595437202444:web:7939802383d326eee75229"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+// -----------------------
 
 let renderer, scene, camera, controller, reticle;
 let hitTestSource = null, hitTestSourceRequested = false;
@@ -186,9 +195,8 @@ let pinchActive = false, pinchInitDist = 0, pinchInitScale = 1;
 init();
 setupUI();
 setupGestures();
-renderer.setAnimationLoop(renderLoop);
 
-function init() {
+async function init() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 20);
     scene.add(new THREE.AmbientLight(0xffffff, 1.8));
@@ -220,8 +228,56 @@ function init() {
         camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
     });
+
+    // Tải dữ liệu Firebase sau khi init AR
+    await fetchFromFirebase();
+    
+    // Bắt đầu render loop
+    renderer.setAnimationLoop(renderLoop);
 }
 
+// --- LOGIC LẤY DỮ LIỆU FIREBASE VÀ ĐƯA VÀO MENU NGANG ---
+async function fetchFromFirebase() {
+    try {
+        const modelSnapshot = await getDocs(collection(db, "models"));
+        const menuContainer = document.getElementById('item-menu');
+        
+        modelSnapshot.forEach(doc => {
+            const data = doc.data();
+            
+            // Tạo nút bấm cho mỗi model
+            const btn = document.createElement('button');
+            btn.className = 'item-btn';
+            btn.dataset.model = data.url;
+            
+            // Gắn hình ảnh thumbnail kèm tên
+            btn.innerHTML = `<img src="${data.image}" style="width: 18px; height: 18px; border-radius: 4px; object-fit: cover;">&nbsp;${data.name}`;
+            
+            // Gắn sự kiện chọn vật thể
+            btn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); 
+                uiLockTime = Date.now();
+                
+                document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); 
+                currentModelPath = btn.dataset.model;
+                
+                if (activeObject) closeEditMode();
+                setStatus('Chạm vòng xanh để đặt vật phẩm.');
+            });
+
+            // Thêm nút vào menu
+            menuContainer.appendChild(btn);
+        });
+
+        setStatus('Đã tải xong dữ liệu. Quét sàn để bắt đầu!');
+    } catch (e) {
+        console.error("Lỗi Firebase:", e);
+        setStatus('❌ Lỗi kết nối dữ liệu Firebase.');
+    }
+}
+
+// --- XỬ LÝ CHỌN VÀ ĐẶT VẬT THỂ ---
 function onSelect() {
     if (uiTouched || (Date.now() - uiLockTime < 300)) return;
     if (!reticle.visible) return;
@@ -252,13 +308,12 @@ function onSelect() {
 }
 
 function placeModel(path) {
-    const isRoom = path.includes('PHONGVE3D');
+    const isRoom = path.includes('PHONGVE3D') || path.toLowerCase().includes('room');
     showSpinner(true); setStatus('Đang tải mô hình…');
 
     gltfLoader.load(path, (gltf) => {
         const model = gltf.scene;
         
-        // Reset hệ trục của model trước khi tính toán
         model.position.set(0, 0, 0);
         model.scale.setScalar(1);
         model.rotation.set(0, 0, 0);
@@ -273,15 +328,12 @@ function placeModel(path) {
             }
         });
 
-        // Tự động thu phóng (Fix lỗi tính toán scale)
         if (!isRoom) {
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const max = Math.max(size.x, size.y, size.z);
             if (max > 1.0) model.scale.setScalar(0.5 / max);
             else if (max < 0.05) model.scale.setScalar(0.2 / max);
-            
-            // QUAN TRỌNG: Phải update lại ma trận thì Box3 mới lấy đúng đáy sau khi thu nhỏ
             model.updateMatrixWorld(true);
         }
 
@@ -292,7 +344,6 @@ function placeModel(path) {
         wrapper.position.setFromMatrixPosition(reticle.matrix);
         wrapper.quaternion.setFromRotationMatrix(reticle.matrix); 
         
-        // Tính toán độ dời tâm chính xác để mặt đáy vật luôn nằm trên bề mặt
         model.position.set(-ctr.x, -box2.min.y, -ctr.z);
         model.userData.baseY = -box2.min.y; 
 
@@ -317,8 +368,8 @@ function placeModel(path) {
 
             el('btn-room').style.display = 'none';
             currentModelPath = null;
-            itemBtns().forEach(b => b.classList.remove('active'));
-            setStatus('Phòng đã đặt! Trỏ vào bề mặt ảo để đặt vật phẩm.');
+            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
+            setStatus('Phòng đã đặt! Trỏ vào bề mặt ảo để đặt nội thất.');
         } else {
             setStatus('Chạm vật để sửa, hoặc chọn vật khác để đặt tiếp.');
         }
@@ -372,6 +423,7 @@ function deleteActive() {
     closeEditMode();
 }
 
+// --- SETUP UI (BẢO VỆ CHỐNG TRÀN SỰ KIỆN) ---
 function setupUI() {
     [el('item-menu'), el('edit-panel')].forEach(panel => {
         panel.addEventListener('beforexrselect', e => { e.preventDefault(); e.stopPropagation(); });
@@ -380,15 +432,18 @@ function setupUI() {
         panel.addEventListener('pointercancel', () => { uiTouched = false; });
     });
 
-    itemBtns().forEach(btn => {
-        btn.addEventListener('pointerdown', (e) => {
+    // Cài đặt nút Phòng 3D tĩnh
+    const btnRoom = document.getElementById('btn-room');
+    if (btnRoom) {
+        btnRoom.addEventListener('pointerdown', (e) => {
             e.stopPropagation(); uiLockTime = Date.now();
-            itemBtns().forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); currentModelPath = btn.dataset.model;
+            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
+            btnRoom.classList.add('active'); 
+            currentModelPath = btnRoom.dataset.model;
             if (activeObject) closeEditMode();
-            setStatus(currentModelPath.includes('PHONGVE3D') ? 'Quét sàn thật để đặt Phòng.' : 'Chạm vòng xanh để đặt vật phẩm.');
+            setStatus('Quét sàn thật để đặt Phòng.');
         });
-    });
+    }
 
     const updateRot = (axis) => (e) => {
         if (!activeObject) return;
@@ -472,12 +527,10 @@ function renderLoop(timestamp, frame) {
                 const hitPt = hits[0].point.clone();
                 if (mainRoom.userData.roomBox) hitPt.clamp(mainRoom.userData.roomBox.min, mainRoom.userData.roomBox.max);
                 
-                // Lấy pháp tuyến bề mặt
                 let worldNormal = hits[0].face.normal.clone();
                 const normalMatrix = new THREE.Matrix3().getNormalMatrix(hits[0].object.matrixWorld);
                 worldNormal.applyMatrix3(normalMatrix).normalize();
 
-                // FIX LỖI ÂM TƯỜNG: Lật lại pháp tuyến nếu đập vào "mặt trong" của phòng
                 if (raycaster.ray.direction.dot(worldNormal) > 0) {
                     worldNormal.negate(); 
                 }
@@ -497,7 +550,6 @@ function onSessionEnd() {
     el('item-menu').style.display = 'none'; el('edit-panel').style.display = 'none';
 }
 function el(id) { return document.getElementById(id); }
-function itemBtns() { return document.querySelectorAll('.item-btn'); }
 function setStatus(msg) { el('status-bar').textContent = msg; }
 function showSpinner(on) { el('spinner').classList.toggle('active', on); }
 function findWrapper(mesh) { let node = mesh; while (node) { if (placedObjects.includes(node)) return node; node = node.parent; } return null; }
