@@ -321,12 +321,8 @@ const clock = new THREE.Clock();
 const gltfLoader = new GLTFLoader();
 const raycaster = new THREE.Raycaster();
 
-// UI shield
+// UI shield: set true while finger is on a UI element
 let uiTouched = false;
-let uiCooldownUntil = 0;   // block AR select until this timestamp (ms)
-function isUIBlocked() { return uiTouched || performance.now() < uiCooldownUntil; }
-function lockUI()   { uiTouched = true; uiCooldownUntil = performance.now() + 600; }
-function unlockUI() { uiTouched = false; }
 
 // Pinch state
 let pinchActive = false;
@@ -391,7 +387,7 @@ function init() {
 //  XR tap → place / move / select
 // ─────────────────────────────────────────────
 function onSelect() {
-    if (isUIBlocked()) return;   // finger was on a UI button recently
+    if (uiTouched) return;          // shield: finger was on UI
     if (!reticle.visible) return;
 
     // Build raycaster from controller forward
@@ -399,22 +395,19 @@ function onSelect() {
     raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
 
-    // ── Ưu tiên 1: Chạm vào vật đã đặt để chọn/bỏ chọn ──
-    // (luôn kiểm tra trước, dù đang ở mode nào)
+    // Try to hit an existing placed object (excluding mainRoom)
     const hittable = placedObjects.filter(o => o !== mainRoom);
     const hits = raycaster.intersectObjects(hittable, true);
     if (hits.length > 0) {
         const wrapper = findWrapper(hits[0].object);
         if (wrapper) {
-            // Nếu đang ở place-mode thì thoát khỏi place-mode trước
-            if (placingMode) exitPlaceMode();
             if (activeObject === wrapper) closeEditMode();
             else openEditMode(wrapper);
             return;
         }
     }
 
-    // ── Ưu tiên 2: Đang trong edit-mode → dời vật tới reticle ──
+    // Move activeObject to reticle
     if (activeObject) {
         const pos = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
         activeObject.position.copy(pos);
@@ -423,12 +416,8 @@ function onSelect() {
         return;
     }
 
-    // ── Ưu tiên 3: Đang trong place-mode → đặt model ──
-    if (placingMode && currentModelPath) {
-        placeModel(currentModelPath);
-        // Giữ nguyên place-mode để có thể đặt thêm cùng loại
-        return;
-    }
+    // Place new model
+    if (currentModelPath) placeModel(currentModelPath);
 }
 
 // ─────────────────────────────────────────────
@@ -570,13 +559,13 @@ function deleteActive() {
 //  UI setup
 // ─────────────────────────────────────────────
 function setupUI() {
-    // Shield: any touch on UI elements → lock with cooldown
+    // Shield: any touch on UI elements
     [el('item-menu'), el('edit-panel')].forEach(panel => {
-        panel.addEventListener('pointerdown',  lockUI);
-        panel.addEventListener('touchstart',   lockUI, { passive: true });
-        panel.addEventListener('pointerup',    unlockUI);
-        panel.addEventListener('touchend',     unlockUI);
-        panel.addEventListener('touchcancel',  unlockUI);
+        panel.addEventListener('pointerdown',  () => { uiTouched = true; });
+        panel.addEventListener('touchstart',   () => { uiTouched = true; }, { passive: true });
+        panel.addEventListener('pointerup',    () => { uiTouched = false; });
+        panel.addEventListener('touchend',     () => { uiTouched = false; });
+        panel.addEventListener('touchcancel',  () => { uiTouched = false; });
         // Prevent WebXR from receiving the event
         panel.addEventListener('beforexrselect', e => e.preventDefault());
     });
@@ -584,7 +573,6 @@ function setupUI() {
     // Item buttons
     itemBtns().forEach(btn => {
         btn.addEventListener('click', () => {
-            lockUI();   // ← chặn AR select ngay khi bấm nút
             itemBtns().forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentModelPath = btn.dataset.model;
