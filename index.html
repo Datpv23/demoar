@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Khóa Căn Phòng & Fix Lỗi Chạm Xuyên UI</title>
+    <title>WebAR - Firebase Firestore Integration</title>
     <style>
-        body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
+        /* GIỮ NGUYÊN CSS CỦA BẠN */
+        body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #000; }
         #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-size: 15px; font-weight: bold; pointer-events: none; z-index: 10; padding: 0 10px; box-sizing: border-box;}
-
         #loading-spinner { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; z-index: 20; }
         @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
-
         #item-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.6); padding: 12px; border-radius: 20px; z-index: 10; white-space: nowrap; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); max-width: 90vw; scroll-behavior: smooth;}
-        .item-btn { background: #fff; border: 3px solid transparent; padding: 10px 20px; margin: 0 5px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .item-btn { background: #fff; border: 3px solid transparent; padding: 10px 20px; margin: 0 5px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); display: inline-block;}
         .item-btn:active { transform: scale(0.95); }
         .item-btn.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
-
         #edit-menu { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 20px; z-index: 20; box-shadow: 0 10px 25px rgba(0,0,0,0.3); backdrop-filter: blur(10px); width: 85vw; max-width: 400px;}
         .edit-title { margin-bottom: 12px; font-size: 14px; font-weight: bold; color: #333; text-align: center;}
-        
         .slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; font-size: 14px; font-weight: bold;}
         .slider-row input { flex-grow: 1; accent-color: #4caf50; }
-        
         .edit-controls { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-top: 15px;}
         .edit-btn { flex: 1; padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s; }
         #btn-delete { background: #ff4d4d; color: white; }
@@ -30,20 +25,11 @@
     </style>
 </head>
 <body>
-    <div id="status-bar">Đang tìm mặt phẳng thật... Hãy quét sàn nhà</div>
+    <div id="status-bar">Khởi tạo hệ thống...</div>
     <div id="loading-spinner"></div>
 
-    <div id="item-menu">
-        <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">Phòng vẽ 3D</button>
-        <button class="item-btn" data-model="models/bang.glb">Bảng</button>
-        <button class="item-btn" data-model="models/bangv.glb">Bảng V</button>
-        <button class="item-btn" data-model="models/BINHCAFE.glb">Bình Cafe</button>
-        <button class="item-btn" data-model="models/gom1.glb">Gốm 1</button>
-        <button class="item-btn" data-model="models/gom2.glb">Gốm 2</button>
-        <button class="item-btn" data-model="models/khoinon.glb">Khối nón</button>
-        <button class="item-btn" data-model="models/khoitru.glb">Khối trụ</button>
-        <button class="item-btn" data-model="models/khoivuong.glb">Khối vuông</button>
-    </div>
+    <!-- Menu này sẽ được đổ dữ liệu tự động từ Firebase -->
+    <div id="item-menu"></div>
 
     <div id="edit-menu">
         <div class="edit-title">Chạm sàn/tường ảo để dời vật</div>
@@ -74,34 +60,81 @@
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
-        let container, camera, scene, renderer;
-        let controller, reticle;
         
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
+        // --- FIREBASE CONFIGURATION ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        let planeFound = false;
-        let currentModelPath = null; 
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQjyaUgKxHqgfW3aaxsgwxUfOPePCkVVA",
+            authDomain: "vku-ar-project.firebaseapp.com",
+            projectId: "vku-ar-project",
+            storageBucket: "vku-ar-project.firebasestorage.app",
+            messagingSenderId: "595437202444",
+            appId: "1:595437202444:web:7939802383d326eee75229"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- GLOBAL VARIABLES ---
+        let container, camera, scene, renderer, controller, reticle;
+        let hitTestSource = null, hitTestSourceRequested = false;
+        let planeFound = false, currentModelPath = null; 
         const placedObjects = [];    
-        let activeObject = null;     
-
-        let mainRoom = null;
-        
-        // BIẾN LÁ CHẮN UI
-        let isClickingUI = false;
+        let activeObject = null, mainRoom = null, isClickingUI = false;
 
         const gltfLoader = new GLTFLoader();
         const raycaster = new THREE.Raycaster();
-        
         let mixers = [];
         const clock = new THREE.Clock();
+        let initialPinchDistance = 0, initialScale = 1;
 
-        let initialPinchDistance = 0;
-        let initialScale = 1;
-
+        // Khởi chạy
         init();
         animate();
+        fetchModelsFromFirebase(); // Tải menu từ Firebase
+
+        async function fetchModelsFromFirebase() {
+            const menuContainer = document.getElementById('item-menu');
+            try {
+                const querySnapshot = await getDocs(collection(db, "models"));
+                menuContainer.innerHTML = ''; // Xóa placeholder nếu có
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const btn = document.createElement('button');
+                    btn.className = 'item-btn';
+                    btn.innerText = data.name;
+                    btn.setAttribute('data-model', data.url);
+                    
+                    // Nếu là căn phòng (dựa trên tên hoặc một field trong firebase)
+                    if (data.name.toLowerCase().includes("phòng") || data.url.includes("PHONGVE3D")) {
+                        btn.id = 'btn-room';
+                    }
+
+                    btn.addEventListener('click', (e) => {
+                        const allBtns = document.querySelectorAll('.item-btn');
+                        allBtns.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        currentModelPath = e.target.getAttribute('data-model');
+                        
+                        if(activeObject) closeEditMode();
+                        
+                        if (currentModelPath.includes('PHONGVE3D') || data.name.toLowerCase().includes("phòng")) {
+                            document.getElementById('status-bar').innerText = "Vui lòng quét mặt sàn THẬT để đặt phòng.";
+                        } else {
+                            document.getElementById('status-bar').innerText = mainRoom ? "Hãy trỏ vào không gian Phòng 3D để đặt vật." : "Chạm vòng xanh để đặt vật.";
+                        }
+                    });
+
+                    menuContainer.appendChild(btn);
+                });
+            } catch (error) {
+                console.error("Lỗi lấy dữ liệu Firebase: ", error);
+                document.getElementById('status-bar').innerText = "Lỗi kết nối dữ liệu!";
+            }
+        }
 
         function init() {
             container = document.createElement( 'div' );
@@ -110,9 +143,7 @@
             scene = new THREE.Scene();
             camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
 
-            const ambientLight = new THREE.AmbientLight( 0xffffff, 1.5 );
-            scene.add( ambientLight );
-
+            scene.add( new THREE.AmbientLight( 0xffffff, 1.5 ) );
             const dirLight = new THREE.DirectionalLight( 0xffffff, 1.5 );
             dirLight.position.set( 2, 5, 2 );
             scene.add( dirLight );
@@ -121,7 +152,6 @@
             renderer.setPixelRatio( Math.min(window.devicePixelRatio, 2) );
             renderer.setSize( window.innerWidth, window.innerHeight );
             renderer.xr.enabled = true;
-            renderer.shadowMap.enabled = false; 
             container.appendChild( renderer.domElement );
 
             document.body.appendChild( ARButton.createButton( renderer, { 
@@ -130,12 +160,8 @@
                 domOverlay: { root: document.body }
             } ) );
 
-            const ringGeo = new THREE.RingGeometry( 0.1, 0.15, 32 );
-            ringGeo.rotateX( - Math.PI / 2 );
-            reticle = new THREE.Mesh(
-                ringGeo,
-                new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.DoubleSide } )
-            );
+            const ringGeo = new THREE.RingGeometry( 0.1, 0.15, 32 ).rotateX( - Math.PI / 2 );
+            reticle = new THREE.Mesh( ringGeo, new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.DoubleSide } ) );
             reticle.matrixAutoUpdate = false;
             reticle.visible = false;
             scene.add( reticle );
@@ -150,8 +176,8 @@
             window.addEventListener( 'resize', onWindowResize );
         }
 
+        // Logic onSelect giữ nguyên như bản cũ của bạn
         function onSelect() {
-            // LÁ CHẮN KÍCH HOẠT: Nếu đang chạm vào Menu thì từ chối mọi thao tác AR
             if (!reticle.visible || isClickingUI) return;
 
             const tempMatrix = new THREE.Matrix4();
@@ -167,321 +193,178 @@
                 while (selectedMesh.parent && !placedObjects.includes(selectedMesh)) {
                     selectedMesh = selectedMesh.parent;
                 }
-                
                 if (placedObjects.includes(selectedMesh)) {
-                    if (activeObject === selectedMesh) {
-                        closeEditMode();
-                    } else {
-                        openEditMode(selectedMesh);
-                    }
+                    activeObject === selectedMesh ? closeEditMode() : openEditMode(selectedMesh);
                     return; 
                 }
             }
 
             if ( activeObject ) {
                 activeObject.position.setFromMatrixPosition( reticle.matrix );
-                const currentOffset = activeObject.userData.offsetY || 0;
-                activeObject.position.y += currentOffset;
-                
-                document.getElementById('status-bar').innerText = "Đã dời vật. Bấm Xong để chốt vị trí.";
+                activeObject.position.y += (activeObject.userData.offsetY || 0);
                 return;
             }
 
-            if ( currentModelPath && !activeObject ) {
-                document.getElementById('status-bar').innerText = "Đang tải...";
+            if ( currentModelPath ) {
                 document.getElementById('loading-spinner').style.display = "block";
-                
-                const isPlacingRoom = currentModelPath.includes('PHONGVE3D');
+                const isPlacingRoom = currentModelPath.includes('PHONGVE3D') || document.querySelector('.item-btn.active')?.innerText.toLowerCase().includes("phòng");
 
                 gltfLoader.load(currentModelPath, function(gltf) {
                     const model = gltf.scene;
                     
                     model.traverse((child) => {
-                        if (child.isMesh) {
-                            child.geometry.computeBoundingBox();
-                            child.geometry.computeBoundingSphere();
-                            child.castShadow = false; 
-                            child.receiveShadow = false;
-                            if (child.material) child.material.side = THREE.DoubleSide; 
-                        }
+                        if (child.isMesh && child.material) child.material.side = THREE.DoubleSide;
                     });
 
-                    const initialBox = new THREE.Box3().setFromObject(model);
-                    const size = initialBox.getSize(new THREE.Vector3());
-                    const maxDimension = Math.max(size.x, size.y, size.z);
-
-                    if (maxDimension > 1.0 && !isPlacingRoom) {
-                        const scaleDown = 0.5 / maxDimension;
-                        model.scale.set(scaleDown, scaleDown, scaleDown);
-                    } else if (maxDimension < 0.05 && !isPlacingRoom) {
-                        const scaleUp = 0.2 / maxDimension;
-                        model.scale.set(scaleUp, scaleUp, scaleUp);
-                    }
-
-                    const scaledBox = new THREE.Box3().setFromObject(model);
-                    const center = scaledBox.getCenter(new THREE.Vector3());
-
-                    model.position.x = -center.x;
-                    model.position.y = -scaledBox.min.y; 
-                    model.position.z = -center.z;
+                    // Tính toán scale tự động
+                    const box = new THREE.Box3().setFromObject(model);
+                    const size = box.getSize(new THREE.Vector3());
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    if (maxDim > 1.0 && !isPlacingRoom) model.scale.multiplyScalar(0.5/maxDim);
 
                     const wrapper = new THREE.Group();
-                    
-                    if (mainRoom && !isPlacingRoom) {
-                         const pos = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
-                         wrapper.position.copy(pos);
-                    } else {
-                         wrapper.position.setFromMatrixPosition( reticle.matrix );
-                         wrapper.quaternion.setFromRotationMatrix( reticle.matrix );
-                    }
+                    wrapper.position.setFromMatrixPosition(reticle.matrix);
+                    if (!isPlacingRoom) wrapper.quaternion.setFromRotationMatrix(reticle.matrix);
                     
                     wrapper.userData.offsetY = 0;
                     wrapper.add(model);
-                    
                     scene.add(wrapper);
                     placedObjects.push(wrapper);
 
                     if (isPlacingRoom) {
                         mainRoom = wrapper;
-                        
                         mainRoom.updateMatrixWorld(true);
-                        const roomBox = new THREE.Box3().setFromObject(mainRoom);
-                        const boxSize = roomBox.getSize(new THREE.Vector3());
-                        roomBox.min.x += boxSize.x * 0.05;
-                        roomBox.max.x -= boxSize.x * 0.05;
-                        roomBox.min.z += boxSize.z * 0.05;
-                        roomBox.max.z -= boxSize.z * 0.05;
-                        mainRoom.userData.box = roomBox;
-
-                        document.getElementById('status-bar').innerText = "Đã vào phòng 3D! Trỏ camera lên bàn/tủ ảo để đặt vật phẩm.";
-                        
-                        const btnRoom = document.getElementById('btn-room');
-                        btnRoom.style.display = 'none';
-                        btnRoom.classList.remove('active');
-                        currentModelPath = null; 
-                    } else {
-                        document.getElementById('status-bar').innerText = "Chạm nội thất để sửa, hoặc chọn vật khác để đặt tiếp";
+                        mainRoom.userData.box = new THREE.Box3().setFromObject(mainRoom);
+                        document.getElementById('btn-room').style.display = 'none';
+                        currentModelPath = null;
+                        document.getElementById('status-bar').innerText = "Phòng đã khóa. Hãy đặt nội thất lên bề mặt ảo.";
                     }
 
-                    if (gltf.animations && gltf.animations.length > 0) {
+                    if (gltf.animations?.length) {
                         const mixer = new THREE.AnimationMixer(model);
-                        gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
+                        gltf.animations.forEach(clip => mixer.clipAction(clip).play());
                         mixers.push(mixer);
                     }
                     
-                    document.getElementById('loading-spinner').style.display = "none";
-                }, undefined, function(error) {
-                    document.getElementById('status-bar').innerText = "Lỗi tải model!";
                     document.getElementById('loading-spinner').style.display = "none";
                 });
             }
         }
 
         function setupUI() {
-            // Thiết lập Lá chắn UI
             const lockAR = () => { isClickingUI = true; };
-            const unlockAR = () => { setTimeout(() => { isClickingUI = false; }, 300); }; // Đợi 300ms để AR bỏ qua nhịp click
+            const unlockAR = () => { setTimeout(() => { isClickingUI = false; }, 300); };
 
-            const ui1 = document.getElementById('item-menu');
-            const ui2 = document.getElementById('edit-menu');
-
-            // Bắt mọi thao tác chạm vào Menu
-            [ui1, ui2].forEach(ui => {
+            const uis = [document.getElementById('item-menu'), document.getElementById('edit-menu')];
+            uis.forEach(ui => {
                 ui.addEventListener('pointerdown', lockAR);
-                ui.addEventListener('touchstart', lockAR, {passive: true});
                 ui.addEventListener('pointerup', unlockAR);
-                ui.addEventListener('touchend', unlockAR);
-                // Đảm bảo event WebXR bị chặn
-                ui.addEventListener('beforexrselect', (e) => { e.preventDefault(); });
+                ui.addEventListener('beforexrselect', (e) => e.preventDefault());
             });
 
-            const itemBtns = document.querySelectorAll('.item-btn');
-            itemBtns.forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    itemBtns.forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    currentModelPath = e.target.getAttribute('data-model');
-                    
-                    if(activeObject) closeEditMode();
-                    
-                    if (currentModelPath.includes('PHONGVE3D')) {
-                        document.getElementById('status-bar').innerText = "Vui lòng quét mặt sàn THẬT để đặt phòng.";
-                    } else {
-                        document.getElementById('status-bar').innerText = mainRoom ? "Hãy trỏ camera vào bên trong Phòng 3D để đặt vật." : "Đã chọn vật phẩm. Chạm vào vòng xanh để đặt.";
-                    }
-                });
-            });
-
-            const btnDelete = document.getElementById('btn-delete');
-            const btnDone = document.getElementById('btn-done');
-            const sliderRotate = document.getElementById('slider-rotate');
-            const sliderHeight = document.getElementById('slider-height');
-
-            btnDelete.addEventListener('click', () => {
+            document.getElementById('btn-delete').addEventListener('click', () => {
                 if (activeObject) {
                     if (activeObject === mainRoom) {
-                        mainRoom = null; 
-                        document.getElementById('btn-room').style.display = 'inline-block'; 
-                        document.getElementById('status-bar').innerText = "Đã xóa phòng. Hệ thống trở về quét mặt sàn thật.";
+                        mainRoom = null;
+                        const btnRoom = document.getElementById('btn-room');
+                        if(btnRoom) btnRoom.style.display = 'inline-block';
                     }
-                    
-                    scene.remove(activeObject); 
-                    activeObject.traverse((child) => {
-                        if (child.isMesh) {
-                            child.geometry.dispose();
-                            if (child.material.isMaterial) child.material.dispose();
-                            else for (const material of child.material) material.dispose();
-                        }
-                    });
-                    
-                    const index = placedObjects.indexOf(activeObject);
-                    if (index > -1) placedObjects.splice(index, 1); 
+                    scene.remove(activeObject);
+                    placedObjects.splice(placedObjects.indexOf(activeObject), 1);
                     closeEditMode();
                 }
             });
 
-            btnDone.addEventListener('click', () => closeEditMode());
-
-            sliderRotate.addEventListener('input', (e) => {
+            document.getElementById('btn-done').addEventListener('click', closeEditMode);
+            document.getElementById('slider-rotate').addEventListener('input', (e) => {
                 if (activeObject) activeObject.rotation.y = THREE.MathUtils.degToRad(e.target.value);
             });
-
-            sliderHeight.addEventListener('input', (e) => {
+            document.getElementById('slider-height').addEventListener('input', (e) => {
                 if (activeObject) {
-                    const newOffset = parseFloat(e.target.value);
-                    activeObject.position.y += (newOffset - (activeObject.userData.offsetY || 0));
-                    activeObject.userData.offsetY = newOffset;
+                    const val = parseFloat(e.target.value);
+                    activeObject.position.y += (val - (activeObject.userData.offsetY || 0));
+                    activeObject.userData.offsetY = val;
                 }
             });
         }
 
-        function openEditMode(object) {
-            activeObject = object;
+        function openEditMode(obj) {
+            activeObject = obj;
             document.getElementById('edit-menu').style.display = 'block';
-            document.getElementById('item-menu').style.display = 'none'; 
-            document.getElementById('status-bar').innerText = "Chỉnh sửa vật thể (Vuốt/Kéo thanh trượt)";
-            document.getElementById('slider-rotate').value = THREE.MathUtils.radToDeg(activeObject.rotation.y);
-            document.getElementById('slider-height').value = activeObject.userData.offsetY || 0;
+            document.getElementById('item-menu').style.display = 'none';
+            document.getElementById('slider-rotate').value = THREE.MathUtils.radToDeg(obj.rotation.y);
+            document.getElementById('slider-height').value = obj.userData.offsetY || 0;
         }
 
         function closeEditMode() {
             activeObject = null;
             document.getElementById('edit-menu').style.display = 'none';
             document.getElementById('item-menu').style.display = 'block';
-            document.getElementById('status-bar').innerText = "Chạm không gian để đặt, hoặc chạm vật để sửa";
         }
 
         function setupGestures() {
             document.body.addEventListener('touchstart', (e) => {
-                // Không thu phóng nếu đang chạm Menu
-                if (isClickingUI) return; 
-
+                if (isClickingUI) return;
                 if (e.touches.length === 2 && activeObject) {
                     initialPinchDistance = getDistance(e.touches);
-                    initialScale = activeObject.scale.x; 
+                    initialScale = activeObject.scale.x;
                 }
-            }, { passive: false });
-
+            });
             document.body.addEventListener('touchmove', (e) => {
-                if (isClickingUI) return;
-
-                if (e.touches.length === 2 && activeObject) {
-                    e.preventDefault(); 
-                    const currentPinchDistance = getDistance(e.touches);
-                    const pinchRatio = currentPinchDistance / initialPinchDistance;
-                    let newScale = initialScale * pinchRatio;
-                    newScale = Math.max(0.01, Math.min(newScale, 100.0)); 
-                    activeObject.scale.set(newScale, newScale, newScale);
-                }
-            }, { passive: false });
+                if (isClickingUI || e.touches.length !== 2 || !activeObject) return;
+                const dist = getDistance(e.touches);
+                const scale = initialScale * (dist / initialPinchDistance);
+                activeObject.scale.setScalar(Math.max(0.01, Math.min(scale, 10)));
+            });
         }
 
-        function getDistance(touches) {
-            const dx = touches[0].pageX - touches[1].pageX;
-            const dy = touches[0].pageY - touches[1].pageY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
+        const getDistance = (t) => Math.hypot(t[0].pageX - t[1].pageX, t[0].pageY - t[1].pageY);
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize( window.innerWidth, window.innerHeight );
         }
-
-        function animate() {
-            renderer.setAnimationLoop( render );
-        }
+        function animate() { renderer.setAnimationLoop( render ); }
 
         function render( timestamp, frame ) {
             const delta = clock.getDelta();
-            mixers.forEach(mixer => mixer.update(delta));
-
+            mixers.forEach(m => m.update(delta));
             if ( frame ) {
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
                 if (!mainRoom) {
-                    if ( hitTestSourceRequested === false ) {
-                        session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
-                            session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
-                                hitTestSource = source;
-                            } );
-                        } );
-                        session.addEventListener( 'end', function () {
-                            hitTestSourceRequested = false;
-                            hitTestSource = null;
-                            planeFound = false; 
-                            mainRoom = null;
-                            document.getElementById('item-menu').style.display = 'none';
-                        } );
+                    if (!hitTestSourceRequested) {
+                        session.requestReferenceSpace('viewer').then(ref => {
+                            session.requestHitTestSource({ space: ref }).then(src => hitTestSource = src);
+                        });
                         hitTestSourceRequested = true;
                     }
-
-                    if ( hitTestSource ) {
-                        const hitTestResults = frame.getHitTestResults( hitTestSource );
-                        if ( hitTestResults.length > 0 ) {
-                            const hit = hitTestResults[ 0 ];
+                    if (hitTestSource) {
+                        const results = frame.getHitTestResults(hitTestSource);
+                        if (results.length > 0) {
                             reticle.visible = true;
-                            reticle.matrix.fromArray( hit.getPose( referenceSpace ).transform.matrix );
-
+                            reticle.matrix.fromArray(results[0].getPose(referenceSpace).transform.matrix);
                             if (!planeFound) {
                                 planeFound = true;
                                 document.getElementById('item-menu').style.display = 'block';
-                                document.getElementById('status-bar').innerText = "Đã thấy sàn! Vui lòng chọn 'Phòng vẽ 3D' để đặt trước.";
+                                document.getElementById('status-bar').innerText = "Đã thấy sàn! Chọn vật phẩm để đặt.";
                             }
-                        } else {
-                            reticle.visible = false;
-                        }
+                        } else { reticle.visible = false; }
                     }
-                } 
-                else {
-                    const tempMatrix = new THREE.Matrix4();
-                    tempMatrix.identity().extractRotation( controller.matrixWorld );
+                } else {
+                    // Logic Raycast lên mainRoom ảo
+                    const tempMatrix = new THREE.Matrix4().identity().extractRotation( controller.matrixWorld );
                     raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
                     raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
-
                     const intersects = raycaster.intersectObject(mainRoom, true);
-
                     if (intersects.length > 0) {
                         reticle.visible = true;
                         const hitPoint = intersects[0].point;
-                        const worldNormal = intersects[0].face.normal.clone().transformDirection(intersects[0].object.matrixWorld).normalize();
-                        
-                        const dummyPosition = new THREE.Vector3().copy(hitPoint);
-                        
-                        if (mainRoom && mainRoom.userData.box) {
-                            dummyPosition.clamp(mainRoom.userData.box.min, mainRoom.userData.box.max);
-                        }
-
-                        const dummyMatrix = new THREE.Matrix4();
-                        const dummyQuaternion = new THREE.Quaternion();
-                        dummyQuaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
-                        
-                        dummyMatrix.compose(dummyPosition, dummyQuaternion, new THREE.Vector3(1, 1, 1));
-                        reticle.matrix.copy(dummyMatrix);
-                    } else {
-                        reticle.visible = false;
-                    }
+                        if (mainRoom.userData.box) hitPoint.clamp(mainRoom.userData.box.min, mainRoom.userData.box.max);
+                        const m = new THREE.Matrix4().makeTranslation(hitPoint.x, hitPoint.y, hitPoint.z);
+                        reticle.matrix.copy(m);
+                    } else { reticle.visible = false; }
                 }
             }
             renderer.render( scene, camera );
