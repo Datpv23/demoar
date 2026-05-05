@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WebAR - Đặt & Thu Phóng Nhiều Vật Thể</title>
+    <style>
+        body { margin: 0; overflow: hidden; touch-action: none; }
+        #ui-container { position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif; pointer-events: none; z-index: 10; text-shadow: 1px 1px 2px black;}
+    </style>
+</head>
+<body>
+    <div id="ui-container">Đang tìm mặt phẳng...</div>
+
+    <!-- Khai báo thư viện Three.js qua CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+
+        let container;
+        let camera, scene, renderer;
+        let controller, reticle;
+        
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+
+        // Quản lý vật thể
+        const placedObjects = [];
+        let activeObject = null; // Vật thể cuối cùng được đặt để thực hiện thu phóng
+
+        // Biến phục vụ cảm ứng (Gestures)
+        let initialPinchDistance = 0;
+        let initialScale = 1;
+
+        init();
+        animate();
+
+        function init() {
+            container = document.createElement( 'div' );
+            document.body.appendChild( container );
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
+
+            const light = new THREE.HemisphereLight( 0xffffff, 0xbbbbff, 3 );
+            light.position.set( 0.5, 1, 0.25 );
+            scene.add( light );
+
+            // Setup Renderer
+            renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
+            renderer.setPixelRatio( window.devicePixelRatio );
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.xr.enabled = true;
+            container.appendChild( renderer.domElement );
+
+            // Tạo nút bắt đầu AR, yêu cầu tính năng hit-test và dom-overlay (để bắt sự kiện cảm ứng)
+            document.body.appendChild( ARButton.createButton( renderer, { 
+                requiredFeatures: ['hit-test'],
+                optionalFeatures: ['dom-overlay'],
+                domOverlay: { root: document.body }
+            } ) );
+
+            // Vòng tròn ngắm (Reticle)
+            reticle = new THREE.Mesh(
+                new THREE.RingGeometry( 0.15, 0.2, 32 ).rotateX( - Math.PI / 2 ),
+                new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
+            );
+            reticle.matrixAutoUpdate = false;
+            reticle.visible = false;
+            scene.add( reticle );
+
+            // Setup Controller cho việc đặt vật thể
+            controller = renderer.xr.getController( 0 );
+            controller.addEventListener( 'select', onSelect );
+            scene.add( controller );
+
+            // Lắng nghe sự kiện cảm ứng cho việc thu phóng
+            setupGestures();
+
+            window.addEventListener( 'resize', onWindowResize );
+        }
+
+        function onSelect() {
+            if ( reticle.visible ) {
+                // Thay thế BoxGeometry này bằng Model .glb xuất từ Blender hoặc 3ds Max của bạn
+                const geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 ); 
+                const material = new THREE.MeshStandardMaterial( { color: Math.random() * 0xffffff } );
+                const mesh = new THREE.Mesh( geometry, material );
+                
+                // Đặt vị trí vật thể tại tọa độ của vòng ngắm
+                mesh.position.setFromMatrixPosition( reticle.matrix );
+                mesh.quaternion.setFromRotationMatrix( reticle.matrix );
+                
+                scene.add( mesh );
+                placedObjects.push( mesh );
+                activeObject = mesh; // Gán vật thể vừa tạo làm active object để thao tác
+                
+                document.getElementById('ui-container').innerText = `Đã đặt: ${placedObjects.length} vật thể`;
+            }
+        }
+
+        function setupGestures() {
+            document.body.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2 && activeObject) {
+                    // Khi chạm 2 ngón, tính khoảng cách ban đầu
+                    initialPinchDistance = getDistance(e.touches);
+                    initialScale = activeObject.scale.x; 
+                }
+            }, { passive: false });
+
+            document.body.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && activeObject) {
+                    e.preventDefault(); // Ngăn trình duyệt cuộn trang
+                    const currentPinchDistance = getDistance(e.touches);
+                    const pinchRatio = currentPinchDistance / initialPinchDistance;
+                    
+                    // Giới hạn scale để tránh quá to hoặc quá nhỏ
+                    let newScale = initialScale * pinchRatio;
+                    newScale = Math.max(0.1, Math.min(newScale, 5.0)); 
+                    
+                    activeObject.scale.set(newScale, newScale, newScale);
+                }
+            }, { passive: false });
+        }
+
+        // Hàm tính khoảng cách giữa 2 điểm chạm (Pythagoras)
+        function getDistance(touches) {
+            const dx = touches[0].pageX - touches[1].pageX;
+            const dy = touches[0].pageY - touches[1].pageY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize( window.innerWidth, window.innerHeight );
+        }
+
+        // Vòng lặp render chính
+        function animate() {
+            renderer.setAnimationLoop( render );
+        }
+
+        function render( timestamp, frame ) {
+            if ( frame ) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                // Yêu cầu Hit Test source
+                if ( hitTestSourceRequested === false ) {
+                    session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
+                        session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
+                            hitTestSource = source;
+                        } );
+                    } );
+                    session.addEventListener( 'end', function () {
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
+                    } );
+                    hitTestSourceRequested = true;
+                }
+
+                if ( hitTestSource ) {
+                    const hitTestResults = frame.getHitTestResults( hitTestSource );
+                    if ( hitTestResults.length > 0 ) {
+                        const hit = hitTestResults[ 0 ];
+                        reticle.visible = true;
+                        reticle.matrix.fromArray( hit.getPose( referenceSpace ).transform.matrix );
+                        document.getElementById('ui-container').innerText = "Chạm để đặt vật thể";
+                    } else {
+                        reticle.visible = false;
+                        document.getElementById('ui-container').innerText = "Di chuyển điện thoại để tìm mặt phẳng...";
+                    }
+                }
+            }
+            renderer.render( scene, camera );
+        }
+    </script>
+</body>
+</html>
