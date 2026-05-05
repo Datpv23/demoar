@@ -6,11 +6,7 @@
     <title>WebAR – Nội Thất 3D Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --green:   #22c55e;
@@ -23,185 +19,84 @@
         }
 
         body {
-            overflow: hidden; 
-            touch-action: none; 
-            font-family: 'Be Vietnam Pro', sans-serif;
-            background: #000; 
-            color: var(--text);
+            overflow: hidden; touch-action: none; font-family: 'Be Vietnam Pro', sans-serif;
+            background: #000; color: var(--text);
         }
 
         /* ── Status bar ── */
         #status-bar {
-            position: fixed; 
-            top: 18px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            background: var(--surface); 
-            backdrop-filter: blur(14px);
-            border: 1px solid var(--border); 
-            border-radius: 100px;
-            padding: 8px 20px; 
-            font-size: 13px; 
-            font-weight: 600;
-            color: var(--text); 
-            white-space: nowrap; 
-            pointer-events: none;
-            z-index: 100; 
-            letter-spacing: 0.02em; 
-            max-width: 90vw;
+            position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
+            background: var(--surface); backdrop-filter: blur(14px);
+            border: 1px solid var(--border); border-radius: 100px;
+            padding: 8px 20px; font-size: 13px; font-weight: 600;
+            color: var(--text); white-space: nowrap; pointer-events: none;
+            z-index: 100; letter-spacing: 0.02em; max-width: 90vw;
         }
 
         /* ── Spinner ── */
         #spinner {
-            display: none; 
-            position: fixed; 
-            inset: 0; 
-            align-items: center;
-            justify-content: center; 
-            z-index: 200; 
-            background: rgba(0,0,0,0.35);
+            display: none; position: fixed; inset: 0; align-items: center;
+            justify-content: center; z-index: 200; background: rgba(0,0,0,0.35);
         }
         #spinner.active { display: flex; }
-        
         .spin-ring {
-            width: 48px; 
-            height: 48px; 
-            border: 4px solid rgba(255,255,255,0.2);
-            border-top-color: var(--green); 
-            border-radius: 50%; 
-            animation: spin 0.9s linear infinite;
+            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--green); border-radius: 50%; animation: spin 0.9s linear infinite;
         }
-        @keyframes spin { 
-            to { transform: rotate(360deg); } 
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ── Item menu ── */
         #item-menu {
-            position: fixed; 
-            bottom: 28px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            display: none; 
-            background: var(--surface); 
-            backdrop-filter: blur(18px);
-            border: 1px solid var(--border); 
-            border-radius: var(--radius);
-            padding: 10px 12px; 
-            z-index: 90; 
-            overflow-x: auto; 
-            max-width: 92vw;
-            scrollbar-width: none; 
-            gap: 8px; 
-            align-items: center;
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            display: none; background: var(--surface); backdrop-filter: blur(18px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 10px 12px; z-index: 90; overflow-x: auto; max-width: 92vw;
+            scrollbar-width: none; gap: 8px; align-items: center;
         }
         #item-menu::-webkit-scrollbar { display: none; }
 
         .item-btn {
-            display: inline-flex; 
-            align-items: center; 
-            gap: 6px;
-            background: var(--glass); 
-            border: 1.5px solid var(--border);
-            color: var(--text); 
-            padding: 9px 16px; 
-            margin: 0 3px;
-            border-radius: 10px; 
-            font-weight: 600; 
-            font-size: 13px;
-            cursor: pointer; 
-            white-space: nowrap; 
-            outline: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--glass); border: 1.5px solid var(--border);
+            color: var(--text); padding: 9px 16px; margin: 0 3px;
+            border-radius: 10px; font-weight: 600; font-size: 13px;
+            cursor: pointer; white-space: nowrap; outline: none;
         }
-        .item-btn.active { 
-            background: rgba(34,197,94,0.18); 
-            border-color: var(--green); 
-            color: var(--green); 
-        }
+        .item-btn.active { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); }
 
         /* ── Edit panel ── */
         #edit-panel {
-            position: fixed; 
-            bottom: 28px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            display: none; 
-            background: var(--surface); 
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border); 
-            border-radius: var(--radius);
-            padding: 18px 20px 16px; 
-            z-index: 90; 
-            width: min(90vw, 420px);
-            max-height: 75vh; 
-            overflow-y: auto;
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            display: none; background: var(--surface); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 18px 20px 16px; z-index: 90; width: min(90vw, 420px);
+            max-height: 75vh; overflow-y: auto;
         }
 
         .panel-title {
-            font-size: 11px; 
-            font-weight: 700; 
-            letter-spacing: 0.10em;
-            text-transform: uppercase; 
-            color: rgba(255,255,255,0.45);
-            margin-bottom: 16px; 
-            text-align: center;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
+            text-transform: uppercase; color: rgba(255,255,255,0.45);
+            margin-bottom: 16px; text-align: center;
         }
 
-        .slider-row { 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            margin-bottom: 14px; 
-        }
-        .slider-label { 
-            font-size: 12px; 
-            font-weight: 700; 
-            color: rgba(255,255,255,0.6); 
-            width: 45px; 
-            flex-shrink: 0; 
-        }
-        .slider-value { 
-            font-size: 11px; 
-            font-weight: 700; 
-            color: var(--green); 
-            width: 36px; 
-            text-align: right; 
-            flex-shrink: 0; 
-        }
-        input[type=range] { 
-            flex-grow: 1; 
-            accent-color: var(--green); 
-            height: 4px; 
-        }
+        .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); width: 45px; flex-shrink: 0; }
+        .slider-value { font-size: 11px; font-weight: 700; color: var(--green); width: 36px; text-align: right; flex-shrink: 0; }
+        input[type=range] { flex-grow: 1; accent-color: var(--green); height: 4px; }
 
-        .btn-row { 
-            display: flex; 
-            gap: 10px; 
-            margin-top: 8px; 
-        }
+        .btn-row { display: flex; gap: 10px; margin-top: 8px; }
         .act-btn {
-            flex: 1; 
-            padding: 12px; 
-            font-weight: 700; 
-            font-size: 14px;
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer;
+            flex: 1; padding: 12px; font-weight: 700; font-size: 14px;
+            border: none; border-radius: 10px; cursor: pointer;
         }
         #btn-delete { background: var(--red); color: #fff; }
         #btn-done   { background: var(--green); color: #fff; }
 
         #ARButton {
-            position: fixed !important; 
-            bottom: 28px !important; 
-            left: 50% !important;
-            transform: translateX(-50%) !important; 
-            background: var(--green) !important;
-            border: none !important; 
-            border-radius: 100px !important; 
-            color: #fff !important;
-            font-weight: 700 !important; 
-            padding: 14px 36px !important; 
-            z-index: 80 !important;
+            position: fixed !important; bottom: 28px !important; left: 50% !important;
+            transform: translateX(-50%) !important; background: var(--green) !important;
+            border: none !important; border-radius: 100px !important; color: #fff !important;
+            font-weight: 700 !important; padding: 14px 36px !important; z-index: 80 !important;
         }
     </style>
 </head>
@@ -270,9 +165,6 @@ import * as THREE from 'three';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// ─────────────────────────────────────────────
-//  Globals
-// ─────────────────────────────────────────────
 let renderer, scene, camera, controller, reticle;
 let hitTestSource = null, hitTestSourceRequested = false;
 let planeFound = false;
@@ -287,30 +179,18 @@ const clock = new THREE.Clock();
 const gltfLoader = new GLTFLoader();
 const raycaster = new THREE.Raycaster();
 
-// UI State Fixes
 let uiTouched = false;
 let uiLockTime = 0; 
+let pinchActive = false, pinchInitDist = 0, pinchInitScale = 1;
 
-// Pinch state
-let pinchActive = false;
-let pinchInitDist = 0;
-let pinchInitScale = 1;
-
-// ─────────────────────────────────────────────
-//  Boot
-// ─────────────────────────────────────────────
 init();
 setupUI();
 setupGestures();
 renderer.setAnimationLoop(renderLoop);
 
-// ─────────────────────────────────────────────
-//  Init
-// ─────────────────────────────────────────────
 function init() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 20);
-    
     scene.add(new THREE.AmbientLight(0xffffff, 1.8));
     const dir = new THREE.DirectionalLight(0xffffff, 1.6);
     dir.position.set(3, 6, 3);
@@ -322,16 +202,11 @@ function init() {
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
 
-    document.body.appendChild(
-        ARButton.createButton(renderer, {
-            requiredFeatures: ['hit-test'], 
-            optionalFeatures: ['dom-overlay'], 
-            domOverlay: { root: document.body }
-        })
-    );
+    document.body.appendChild(ARButton.createButton(renderer, {
+        requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body }
+    }));
 
-    const geo = new THREE.RingGeometry(0.08, 0.13, 36);
-    geo.rotateX(-Math.PI / 2);
+    const geo = new THREE.RingGeometry(0.08, 0.13, 36).rotateX(-Math.PI / 2);
     reticle = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide }));
     reticle.matrixAutoUpdate = false;
     reticle.visible = false;
@@ -342,17 +217,12 @@ function init() {
     scene.add(controller);
 
     window.addEventListener('resize', () => {
-        camera.aspect = innerWidth / innerHeight; 
-        camera.updateProjectionMatrix();
+        camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
     });
 }
 
-// ─────────────────────────────────────────────
-//  XR tap → place / move / select
-// ─────────────────────────────────────────────
 function onSelect() {
-    // Chặn nếu đang bấm giao diện hoặc vừa bấm xong
     if (uiTouched || (Date.now() - uiLockTime < 300)) return;
     if (!reticle.visible) return;
 
@@ -366,39 +236,34 @@ function onSelect() {
     if (hits.length > 0) {
         const wrapper = findWrapper(hits[0].object);
         if (wrapper) {
-            if (activeObject === wrapper) {
-                closeEditMode();
-            } else {
-                openEditMode(wrapper);
-            }
+            activeObject === wrapper ? closeEditMode() : openEditMode(wrapper);
             return; 
         }
     }
 
     if (activeObject) {
-        // Cập nhật vị trí VÀ chiều xoay theo bề mặt
         activeObject.position.setFromMatrixPosition(reticle.matrix);
         activeObject.quaternion.setFromRotationMatrix(reticle.matrix);
         setStatus('Đã dời vật. Bấm ✓ Xong để chốt.');
         return;
     }
 
-    if (currentModelPath && !activeObject) {
-        placeModel(currentModelPath);
-    }
+    if (currentModelPath && !activeObject) placeModel(currentModelPath);
 }
 
-// ─────────────────────────────────────────────
-//  Place model
-// ─────────────────────────────────────────────
 function placeModel(path) {
     const isRoom = path.includes('PHONGVE3D');
-    showSpinner(true); 
-    setStatus('Đang tải mô hình…');
+    showSpinner(true); setStatus('Đang tải mô hình…');
 
     gltfLoader.load(path, (gltf) => {
         const model = gltf.scene;
         
+        // Reset hệ trục của model trước khi tính toán
+        model.position.set(0, 0, 0);
+        model.scale.setScalar(1);
+        model.rotation.set(0, 0, 0);
+        model.updateMatrixWorld(true);
+
         model.traverse(child => {
             if (!child.isMesh) return;
             child.geometry.computeBoundingBox();
@@ -408,28 +273,28 @@ function placeModel(path) {
             }
         });
 
-        // Auto-scale cho đồ nội thất (bỏ qua phòng)
+        // Tự động thu phóng (Fix lỗi tính toán scale)
         if (!isRoom) {
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
             const max = Math.max(size.x, size.y, size.z);
             if (max > 1.0) model.scale.setScalar(0.5 / max);
             else if (max < 0.05) model.scale.setScalar(0.2 / max);
+            
+            // QUAN TRỌNG: Phải update lại ma trận thì Box3 mới lấy đúng đáy sau khi thu nhỏ
+            model.updateMatrixWorld(true);
         }
 
         const box2 = new THREE.Box3().setFromObject(model);
         const ctr  = box2.getCenter(new THREE.Vector3());
         
-        // Cấu trúc mới: Wrapper bám sát bề mặt, Model nhận thông số tùy chỉnh
         const wrapper = new THREE.Group();
         wrapper.position.setFromMatrixPosition(reticle.matrix);
-        
-        // Xoay Wrapper áp sát hoàn toàn vào bề mặt mặt sàn/tường/trần
         wrapper.quaternion.setFromRotationMatrix(reticle.matrix); 
         
-        // Tâm vật thể đặt ở đáy
+        // Tính toán độ dời tâm chính xác để mặt đáy vật luôn nằm trên bề mặt
         model.position.set(-ctr.x, -box2.min.y, -ctr.z);
-        model.userData.baseY = -box2.min.y; // Lưu lại đáy gốc để phục vụ chức năng Nâng/Cao
+        model.userData.baseY = -box2.min.y; 
 
         wrapper.add(model);
         scene.add(wrapper);
@@ -458,38 +323,23 @@ function placeModel(path) {
             setStatus('Chạm vật để sửa, hoặc chọn vật khác để đặt tiếp.');
         }
         showSpinner(false);
-    }, undefined, () => { 
-        setStatus('❌ Lỗi tải model.'); 
-        showSpinner(false); 
-    });
+    }, undefined, () => { setStatus('❌ Lỗi tải model.'); showSpinner(false); });
 }
 
-// ─────────────────────────────────────────────
-//  Edit mode
-// ─────────────────────────────────────────────
 function openEditMode(obj) {
     activeObject = obj;
-    const model = obj.children[0]; // Model thực tế nằm trong wrapper
+    const model = obj.children[0];
     
     const rx = Math.round(THREE.MathUtils.radToDeg(model.rotation.x));
     const ry = Math.round(THREE.MathUtils.radToDeg(model.rotation.y));
     const rz = Math.round(THREE.MathUtils.radToDeg(model.rotation.z));
     const offsetY = model.position.y - model.userData.baseY;
 
-    el('sl-rotate-x').value = rx; 
-    el('val-rotate-x').textContent = rx + '°';
-    
-    el('sl-rotate-y').value = ry; 
-    el('val-rotate-y').textContent = ry + '°';
-    
-    el('sl-rotate-z').value = rz; 
-    el('val-rotate-z').textContent = rz + '°';
-    
-    el('sl-height').value = offsetY; 
-    el('val-height').textContent = offsetY.toFixed(2) + 'm';
-    
-    el('sl-scale').value = obj.scale.x; 
-    el('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
+    el('sl-rotate-x').value = rx; el('val-rotate-x').textContent = rx + '°';
+    el('sl-rotate-y').value = ry; el('val-rotate-y').textContent = ry + '°';
+    el('sl-rotate-z').value = rz; el('val-rotate-z').textContent = rz + '°';
+    el('sl-height').value = offsetY; el('val-height').textContent = offsetY.toFixed(2) + 'm';
+    el('sl-scale').value = obj.scale.x; el('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
 
     el('edit-panel').style.display = 'block';
     el('item-menu').style.display  = 'none';
@@ -507,8 +357,7 @@ function closeEditMode() {
 function deleteActive() {
     if (!activeObject) return;
     if (activeObject === mainRoom) {
-        mainRoom = null; 
-        el('btn-room').style.display = 'inline-flex';
+        mainRoom = null; el('btn-room').style.display = 'inline-flex';
         setStatus('Đã xóa phòng. Quét sàn thật để đặt lại.');
     }
     
@@ -518,80 +367,39 @@ function deleteActive() {
         const mats = Array.isArray(child.material) ? child.material : [child.material];
         mats.forEach(m => m?.dispose());
     });
-    
-    if (mixerMap.has(activeObject)) { 
-        mixerMap.get(activeObject).stopAllAction(); 
-        mixerMap.delete(activeObject); 
-    }
-    
-    scene.remove(activeObject); 
-    placedObjects.splice(placedObjects.indexOf(activeObject), 1);
+    if (mixerMap.has(activeObject)) { mixerMap.get(activeObject).stopAllAction(); mixerMap.delete(activeObject); }
+    scene.remove(activeObject); placedObjects.splice(placedObjects.indexOf(activeObject), 1);
     closeEditMode();
 }
 
-// ─────────────────────────────────────────────
-//  UI setup
-// ─────────────────────────────────────────────
 function setupUI() {
     [el('item-menu'), el('edit-panel')].forEach(panel => {
-        panel.addEventListener('beforexrselect', e => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-        });
-        panel.addEventListener('pointerdown', e => { 
-            e.stopPropagation(); 
-            uiTouched = true; 
-        });
-        panel.addEventListener('pointerup', () => { 
-            uiTouched = false; 
-        });
-        panel.addEventListener('pointercancel', () => { 
-            uiTouched = false; 
-        });
+        panel.addEventListener('beforexrselect', e => { e.preventDefault(); e.stopPropagation(); });
+        panel.addEventListener('pointerdown', e => { e.stopPropagation(); uiTouched = true; });
+        panel.addEventListener('pointerup', () => { uiTouched = false; });
+        panel.addEventListener('pointercancel', () => { uiTouched = false; });
     });
 
     itemBtns().forEach(btn => {
         btn.addEventListener('pointerdown', (e) => {
-            e.stopPropagation(); 
-            uiLockTime = Date.now();
-            
+            e.stopPropagation(); uiLockTime = Date.now();
             itemBtns().forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); 
-            currentModelPath = btn.dataset.model;
-            
+            btn.classList.add('active'); currentModelPath = btn.dataset.model;
             if (activeObject) closeEditMode();
-            
-            if (currentModelPath.includes('PHONGVE3D')) {
-                setStatus('Quét sàn thật để đặt Phòng.');
-            } else {
-                setStatus('Chạm vòng xanh để đặt vật phẩm.');
-            }
+            setStatus(currentModelPath.includes('PHONGVE3D') ? 'Quét sàn thật để đặt Phòng.' : 'Chạm vòng xanh để đặt vật phẩm.');
         });
     });
 
-    // Các thanh trượt Xoay (Áp dụng lên Model bên trong)
-    el('sl-rotate-x').addEventListener('input', e => {
+    const updateRot = (axis) => (e) => {
         if (!activeObject) return;
         const val = parseFloat(e.target.value);
-        activeObject.children[0].rotation.x = THREE.MathUtils.degToRad(val);
-        el('val-rotate-x').textContent = Math.round(val) + '°';
-    });
+        activeObject.children[0].rotation[axis] = THREE.MathUtils.degToRad(val);
+        el(`val-rotate-${axis}`).textContent = Math.round(val) + '°';
+    };
+    el('sl-rotate-x').addEventListener('input', updateRot('x'));
+    el('sl-rotate-y').addEventListener('input', updateRot('y'));
+    el('sl-rotate-z').addEventListener('input', updateRot('z'));
 
-    el('sl-rotate-y').addEventListener('input', e => {
-        if (!activeObject) return;
-        const val = parseFloat(e.target.value);
-        activeObject.children[0].rotation.y = THREE.MathUtils.degToRad(val);
-        el('val-rotate-y').textContent = Math.round(val) + '°';
-    });
-
-    el('sl-rotate-z').addEventListener('input', e => {
-        if (!activeObject) return;
-        const val = parseFloat(e.target.value);
-        activeObject.children[0].rotation.z = THREE.MathUtils.degToRad(val);
-        el('val-rotate-z').textContent = Math.round(val) + '°';
-    });
-
-    // Chỉnh khoảng cách so với bề mặt (Cao/Nổi)
     el('sl-height').addEventListener('input', e => {
         if (!activeObject) return;
         const val = parseFloat(e.target.value);
@@ -600,7 +408,6 @@ function setupUI() {
         el('val-height').textContent = val.toFixed(2) + 'm';
     });
 
-    // Scale áp dụng lên toàn Wrapper
     el('sl-scale').addEventListener('input', e => {
         if (!activeObject) return;
         const s = parseFloat(e.target.value);
@@ -608,52 +415,29 @@ function setupUI() {
         el('val-scale').textContent = s.toFixed(2) + '×';
     });
 
-    // Nút Xóa / Xong
-    el('btn-delete').addEventListener('pointerdown', (e) => { 
-        e.stopPropagation(); 
-        uiLockTime = Date.now(); 
-        deleteActive(); 
-    });
-    
-    el('btn-done').addEventListener('pointerdown', (e) => { 
-        e.stopPropagation(); 
-        uiLockTime = Date.now(); 
-        closeEditMode(); 
-    });
+    el('btn-delete').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); deleteActive(); });
+    el('btn-done').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); closeEditMode(); });
 }
 
-// ─────────────────────────────────────────────
-//  Gestures (Pinch to scale)
-// ─────────────────────────────────────────────
 function setupGestures() {
     document.body.addEventListener('touchstart', e => {
         if (uiTouched || !activeObject || e.touches.length !== 2) return;
-        pinchActive = true; 
-        pinchInitDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        pinchActive = true; pinchInitDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         pinchInitScale = activeObject.scale.x;
     }, { passive: true });
-
     document.body.addEventListener('touchmove', e => {
         if (!pinchActive || uiTouched || !activeObject || e.touches.length !== 2) return;
         e.preventDefault();
         const ratio = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY) / pinchInitDist;
         const newScale = Math.max(0.01, Math.min(pinchInitScale * ratio, 20));
         activeObject.scale.setScalar(newScale);
-        
         if (el('sl-scale') && parseFloat(el('sl-scale').max) >= newScale) {
-            el('sl-scale').value = newScale; 
-            el('val-scale').textContent = newScale.toFixed(2) + '×';
+            el('sl-scale').value = newScale; el('val-scale').textContent = newScale.toFixed(2) + '×';
         }
     }, { passive: false });
-
-    document.body.addEventListener('touchend', e => { 
-        if (e.touches.length < 2) pinchActive = false; 
-    }, { passive: true });
+    document.body.addEventListener('touchend', e => { if (e.touches.length < 2) pinchActive = false; }, { passive: true });
 }
 
-// ─────────────────────────────────────────────
-//  Render Loop
-// ─────────────────────────────────────────────
 function renderLoop(timestamp, frame) {
     const delta = clock.getDelta();
     mixerMap.forEach(mixer => mixer.update(delta));
@@ -664,33 +448,18 @@ function renderLoop(timestamp, frame) {
 
         if (!mainRoom) {
             if (!hitTestSourceRequested) {
-                session.requestReferenceSpace('viewer').then(vs => { 
-                    session.requestHitTestSource({ space: vs }).then(src => hitTestSource = src); 
-                });
-                session.addEventListener('end', onSessionEnd); 
-                hitTestSourceRequested = true;
+                session.requestReferenceSpace('viewer').then(vs => { session.requestHitTestSource({ space: vs }).then(src => hitTestSource = src); });
+                session.addEventListener('end', onSessionEnd); hitTestSourceRequested = true;
             }
             if (hitTestSource) {
                 const results = frame.getHitTestResults(hitTestSource);
                 if (results.length > 0) {
-                    reticle.visible = true; 
-                    reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
-                    
-                    if (!planeFound) { 
-                        planeFound = true; 
-                        el('item-menu').style.display = 'flex'; 
-                        setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước."); 
-                    }
-                } else {
-                    reticle.visible = false;
-                }
+                    reticle.visible = true; reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
+                    if (!planeFound) { planeFound = true; el('item-menu').style.display = 'flex'; setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước."); }
+                } else reticle.visible = false;
             }
         } else {
-            if (hitTestSource) { 
-                hitTestSource.cancel?.(); 
-                hitTestSource = null; 
-            }
-            
+            if (hitTestSource) { hitTestSource.cancel?.(); hitTestSource = null; }
             const mat = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
             raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
             raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
@@ -701,13 +470,18 @@ function renderLoop(timestamp, frame) {
             if (hits.length > 0) {
                 reticle.visible = true;
                 const hitPt = hits[0].point.clone();
+                if (mainRoom.userData.roomBox) hitPt.clamp(mainRoom.userData.roomBox.min, mainRoom.userData.roomBox.max);
                 
-                if (mainRoom.userData.roomBox) {
-                    hitPt.clamp(mainRoom.userData.roomBox.min, mainRoom.userData.roomBox.max);
+                // Lấy pháp tuyến bề mặt
+                let worldNormal = hits[0].face.normal.clone();
+                const normalMatrix = new THREE.Matrix3().getNormalMatrix(hits[0].object.matrixWorld);
+                worldNormal.applyMatrix3(normalMatrix).normalize();
+
+                // FIX LỖI ÂM TƯỜNG: Lật lại pháp tuyến nếu đập vào "mặt trong" của phòng
+                if (raycaster.ray.direction.dot(worldNormal) > 0) {
+                    worldNormal.negate(); 
                 }
-                
-                // Trích xuất hướng mặt phẳng (pháp tuyến)
-                const worldNormal = hits[0].face.normal.clone().transformDirection(hits[0].object.matrixWorld).normalize();
+
                 const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
                 reticle.matrix.compose(hitPt, q, new THREE.Vector3(1, 1, 1));
             } else {
@@ -719,27 +493,14 @@ function renderLoop(timestamp, frame) {
 }
 
 function onSessionEnd() {
-    hitTestSourceRequested = false; 
-    hitTestSource = null; 
-    planeFound = false; 
-    mainRoom = null;
-    el('item-menu').style.display = 'none'; 
-    el('edit-panel').style.display = 'none';
+    hitTestSourceRequested = false; hitTestSource = null; planeFound = false; mainRoom = null;
+    el('item-menu').style.display = 'none'; el('edit-panel').style.display = 'none';
 }
-
-// Helpers
 function el(id) { return document.getElementById(id); }
 function itemBtns() { return document.querySelectorAll('.item-btn'); }
 function setStatus(msg) { el('status-bar').textContent = msg; }
 function showSpinner(on) { el('spinner').classList.toggle('active', on); }
-function findWrapper(mesh) { 
-    let node = mesh; 
-    while (node) { 
-        if (placedObjects.includes(node)) return node; 
-        node = node.parent; 
-    } 
-    return null; 
-}
+function findWrapper(mesh) { let node = mesh; while (node) { if (placedObjects.includes(node)) return node; node = node.parent; } return null; }
 </script>
 </body>
 </html>
