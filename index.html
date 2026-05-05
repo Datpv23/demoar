@@ -3,25 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Fix Lỗi Lơ Lửng & Chọn Vật Thể</title>
+    <title>WebAR - Tối Ưu Hiệu Năng & UX</title>
     <style>
         body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
-        #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-size: 16px; font-weight: bold; pointer-events: none; z-index: 10; transition: 0.3s; }
+        #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); font-size: 15px; font-weight: bold; pointer-events: none; z-index: 10; transition: 0.3s; padding: 0 10px; box-sizing: border-box;}
 
         #loading-spinner { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border: 5px solid rgba(255,255,255,0.3); border-top: 5px solid white; border-radius: 50%; animation: spin 1s linear infinite; z-index: 20; }
         @keyframes spin { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
-        #item-menu { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.5); padding: 12px; border-radius: 20px; z-index: 10; white-space: nowrap; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); max-width: 90vw;}
-        .item-btn { background: #fff; border: 3px solid transparent; padding: 12px 24px; margin: 0 6px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        #item-menu { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.6); padding: 12px; border-radius: 20px; z-index: 10; white-space: nowrap; overflow-x: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); backdrop-filter: blur(5px); max-width: 90vw; scroll-behavior: smooth;}
+        .item-btn { background: #fff; border: 3px solid transparent; padding: 10px 20px; margin: 0 5px; border-radius: 12px; font-weight: bold; font-size: 14px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .item-btn:active { transform: scale(0.95); }
         .item-btn.active { border-color: #4caf50; background: #e8f5e9; color: #2e7d32; }
 
-        #edit-menu { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.95); padding: 15px 25px; border-radius: 20px; z-index: 20; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; backdrop-filter: blur(10px); width: 85vw; max-width: 400px;}
-        .edit-title { margin-bottom: 12px; font-size: 15px; font-weight: bold; color: #333; }
+        #edit-menu { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.95); padding: 15px; border-radius: 20px; z-index: 20; box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center; backdrop-filter: blur(10px); width: 85vw; max-width: 400px;}
+        .edit-title { margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #333; }
         .edit-controls { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .edit-btn { padding: 10px 15px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .edit-btn:active { transform: scale(0.95); }
+        .edit-btn { padding: 10px 15px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; transition: 0.2s; }
         #btn-delete { background: #ff4d4d; color: white; }
         #btn-done { background: #4caf50; color: white; }
         #slider-rotate { flex-grow: 1; accent-color: #4caf50; }
@@ -40,10 +39,12 @@
         <button class="item-btn" data-model="models/Binh_cafe.glb">Bình cafe</button>
         <button class="item-btn" data-model="models/Binh_tra.glb">Bình trà</button>
         <button class="item-btn" data-model="models/bang.glb">Bảng</button>
+        <button class="item-btn" data-model="models/pikachu (1).glb">Bình trà</button>
+        <button class="item-btn" data-model="models/pikachu.glb">Bảng</button>
     </div>
 
     <div id="edit-menu">
-        <div class="edit-title">Chạm ra sàn để di chuyển, 2 ngón để thu phóng</div>
+        <div class="edit-title">Chạm vòng xanh để dời vật, 2 ngón thu phóng</div>
         <div class="edit-controls">
             <button id="btn-delete" class="edit-btn">Xóa</button>
             <input type="range" id="slider-rotate" min="0" max="360" value="0">
@@ -99,31 +100,32 @@
             const ambientLight = new THREE.AmbientLight( 0xffffff, 0.8 );
             scene.add( ambientLight );
 
-            const dirLight = new THREE.DirectionalLight( 0xffffff, 2.5 );
+            const dirLight = new THREE.DirectionalLight( 0xffffff, 2.0 );
             dirLight.position.set( 2, 5, 2 );
+            // TỐI ƯU VĂNG APP: Giảm độ phân giải bóng đổ
             dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 1024;
-            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.mapSize.width = 512; 
+            dirLight.shadow.mapSize.height = 512;
             dirLight.shadow.camera.near = 0.5;
-            dirLight.shadow.camera.far = 20;
+            dirLight.shadow.camera.far = 10;
             scene.add( dirLight );
 
-            // Làm mặt phẳng nhận bóng rộng ra để không bị đứt bóng
-            const shadowGeo = new THREE.PlaneGeometry(100, 100);
+            const shadowGeo = new THREE.PlaneGeometry(50, 50);
             shadowGeo.rotateX(-Math.PI / 2);
-            const shadowMat = new THREE.ShadowMaterial({ opacity: 0.5 });
+            const shadowMat = new THREE.ShadowMaterial({ opacity: 0.4 });
             shadowPlane = new THREE.Mesh(shadowGeo, shadowMat);
             shadowPlane.receiveShadow = true;
             shadowPlane.visible = false; 
             scene.add(shadowPlane);
 
             renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
+            // TỐI ƯU VĂNG APP: Giới hạn Pixel Ratio trên màn hình độ nét cao
+            renderer.setPixelRatio( Math.min(window.devicePixelRatio, 2) );
             renderer.setSize( window.innerWidth, window.innerHeight );
             renderer.xr.enabled = true;
             
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.shadowMap.type = THREE.PCFShadowMap; // Đổi sang bóng đổ cơ bản cho nhẹ
             container.appendChild( renderer.domElement );
 
             document.body.appendChild( ARButton.createButton( renderer, { 
@@ -150,11 +152,10 @@
             window.addEventListener( 'resize', onWindowResize );
         }
 
-        // --- CORE LOGIC: CHỌN, DI CHUYỂN VÀ ĐẶT VẬT THỂ ---
+        // --- CORE LOGIC TỐI ƯU: CHỌN, DI CHUYỂN, ĐẶT ---
         function onSelect() {
             if (!reticle.visible) return;
 
-            // 1. DÙNG RAYCASTER KIỂM TRA XEM CÓ CHẠM VÀO VẬT ĐÃ ĐẶT KHÔNG
             const tempMatrix = new THREE.Matrix4();
             tempMatrix.identity().extractRotation( controller.matrixWorld );
             raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
@@ -162,26 +163,32 @@
 
             const intersects = raycaster.intersectObjects( placedObjects, true );
 
+            // 1. NẾU CHẠM TRÚNG VẬT THỂ
             if ( intersects.length > 0 ) {
-                // Truy ngược lên để tìm Wrapper gốc của vật thể
                 let selectedMesh = intersects[0].object;
                 while (selectedMesh.parent && !placedObjects.includes(selectedMesh)) {
                     selectedMesh = selectedMesh.parent;
                 }
                 
                 if (placedObjects.includes(selectedMesh)) {
-                    openEditMode(selectedMesh);
-                    return; // Đã chọn vật thể thì dừng lại
+                    // Cải tiến UX: Nếu chạm vào vật ĐANG CHỌN -> Coi như bấm nút Xong (bỏ chọn)
+                    if (activeObject === selectedMesh) {
+                        closeEditMode();
+                    } else {
+                        openEditMode(selectedMesh);
+                    }
+                    return; 
                 }
             }
 
-            // 2. NẾU ĐANG CHỈNH SỬA MÀ CHẠM RA MẶT SÀN -> DI CHUYỂN VẬT THỂ
+            // 2. NẾU ĐANG CHỈNH SỬA & CHẠM XUỐNG SÀN (KHÔNG CHẠM VẬT) -> DI CHUYỂN VẬT
             if ( activeObject ) {
                 activeObject.position.setFromMatrixPosition( reticle.matrix );
+                document.getElementById('status-bar').innerText = "Đã dời vật. Tiếp tục chạm sàn để dời, hoặc bấm Xong.";
                 return;
             }
 
-            // 3. ĐẶT VẬT THỂ MỚI (NẾU KHÔNG CÓ VẬT NÀO ĐANG ĐƯỢC CHỌN)
+            // 3. NẾU KHÔNG CÓ VẬT NÀO ĐƯỢC CHỌN -> ĐẶT VẬT MỚI
             if ( currentModelPath && !activeObject ) {
                 document.getElementById('status-bar').innerText = "Đang xử lý kích thước model...";
                 document.getElementById('loading-spinner').style.display = "block";
@@ -189,7 +196,6 @@
                 gltfLoader.load(currentModelPath, function(gltf) {
                     const model = gltf.scene;
                     
-                    // Sửa lỗi Raycaster: Tính toán lại khung bao cho tất cả mesh
                     model.traverse((child) => {
                         if (child.isMesh) {
                             child.castShadow = true;
@@ -199,16 +205,31 @@
                         }
                     });
 
-                    // SỬA LỖI LƠ LỬNG: Tự động đo kích thước và ép model xuống chạm đáy
-                    const box = new THREE.Box3().setFromObject(model);
-                    const center = box.getCenter(new THREE.Vector3());
+                    // --- CHUẨN HÓA KÍCH THƯỚC (FIX LỖI THU PHÓNG) ---
+                    const initialBox = new THREE.Box3().setFromObject(model);
+                    const size = initialBox.getSize(new THREE.Vector3());
+                    const maxDimension = Math.max(size.x, size.y, size.z);
 
-                    // Căn chỉnh tâm và kéo phần thấp nhất (box.min.y) xuống trục tọa độ 0
+                    // Nếu vật thể to hơn 1 mét, ép nhỏ lại còn 0.5 mét
+                    if (maxDimension > 1.0) {
+                        const scaleDown = 0.5 / maxDimension;
+                        model.scale.set(scaleDown, scaleDown, scaleDown);
+                    } 
+                    // Nếu vật thể quá nhỏ (< 5cm), phóng to lên 20cm
+                    else if (maxDimension < 0.05) {
+                        const scaleUp = 0.2 / maxDimension;
+                        model.scale.set(scaleUp, scaleUp, scaleUp);
+                    }
+
+                    // --- ÉP ĐÁY CHẠM SÀN (FIX LỖI LƠ LỬNG) ---
+                    // Phải tính lại Box sau khi Scale
+                    const scaledBox = new THREE.Box3().setFromObject(model);
+                    const center = scaledBox.getCenter(new THREE.Vector3());
+
                     model.position.x = -center.x;
-                    model.position.y = -box.min.y; 
+                    model.position.y = -scaledBox.min.y; 
                     model.position.z = -center.z;
 
-                    // Tạo Wrapper: Gói model lại để việc xoay, scale, di chuyển hoạt động chuẩn xác
                     const wrapper = new THREE.Group();
                     wrapper.position.setFromMatrixPosition( reticle.matrix );
                     wrapper.quaternion.setFromRotationMatrix( reticle.matrix );
@@ -217,7 +238,6 @@
                     scene.add(wrapper);
                     placedObjects.push(wrapper);
 
-                    // Xử lý Animations (nếu model có)
                     if (gltf.animations && gltf.animations.length > 0) {
                         const mixer = new THREE.AnimationMixer(model);
                         gltf.animations.forEach((clip) => {
@@ -230,7 +250,7 @@
                     document.getElementById('loading-spinner').style.display = "none";
                 }, undefined, function(error) {
                     console.error("Lỗi khi tải model:", error);
-                    document.getElementById('status-bar').innerText = "Lỗi tải model! Vui lòng thử lại.";
+                    document.getElementById('status-bar').innerText = "Lỗi tải model! Có thể file quá nặng.";
                     document.getElementById('loading-spinner').style.display = "none";
                 });
             }
@@ -244,6 +264,10 @@
                     itemBtns.forEach(b => b.classList.remove('active'));
                     e.target.classList.add('active');
                     currentModelPath = e.target.getAttribute('data-model');
+                    
+                    // Khi chọn vật mới, tự động bỏ chọn vật cũ để tránh nhầm lẫn
+                    if(activeObject) closeEditMode();
+                    
                     document.getElementById('status-bar').innerText = "Đã chọn vật phẩm. Chạm vào vòng xanh để đặt.";
                 });
             });
@@ -254,7 +278,19 @@
 
             btnDelete.addEventListener('click', () => {
                 if (activeObject) {
+                    // Cấu trúc loại bỏ để giải phóng RAM
                     scene.remove(activeObject); 
+                    activeObject.traverse((child) => {
+                        if (child.isMesh) {
+                            child.geometry.dispose();
+                            if (child.material.isMaterial) {
+                                child.material.dispose();
+                            } else {
+                                for (const material of child.material) material.dispose();
+                            }
+                        }
+                    });
+                    
                     const index = placedObjects.indexOf(activeObject);
                     if (index > -1) placedObjects.splice(index, 1); 
                     closeEditMode();
@@ -277,7 +313,7 @@
             activeObject = object;
             document.getElementById('edit-menu').style.display = 'block';
             document.getElementById('item-menu').style.display = 'none'; 
-            document.getElementById('status-bar').innerText = "Chế độ chỉnh sửa đang bật";
+            document.getElementById('status-bar').innerText = "Chạm vòng xanh để dời vật, vuốt thanh trượt để xoay";
             
             const currentDeg = THREE.MathUtils.radToDeg(activeObject.rotation.y);
             document.getElementById('slider-rotate').value = currentDeg;
@@ -306,7 +342,8 @@
                     const pinchRatio = currentPinchDistance / initialPinchDistance;
                     
                     let newScale = initialScale * pinchRatio;
-                    newScale = Math.max(0.05, Math.min(newScale, 10.0)); 
+                    // Mở rộng giới hạn thu phóng từ siêu nhỏ đến khổng lồ
+                    newScale = Math.max(0.01, Math.min(newScale, 100.0)); 
                     
                     activeObject.scale.set(newScale, newScale, newScale);
                 }
@@ -359,7 +396,6 @@
                 if ( hitTestSource ) {
                     const hitTestResults = frame.getHitTestResults( hitTestSource );
                     
-                    // Luôn hiện vòng ngắm để người dùng biết điểm đang trỏ tới
                     if ( hitTestResults.length > 0 ) {
                         const hit = hitTestResults[ 0 ];
                         reticle.visible = true;
