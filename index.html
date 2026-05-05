@@ -10,9 +10,10 @@
 
         :root {
             --green:   #22c55e;
+            --cyan:    #00e5ff;
             --red:     #ef4444;
-            --surface: rgba(10, 12, 18, 0.85);
-            --glass:   rgba(255, 255, 255, 0.10);
+            --surface: rgba(11, 20, 38, 0.9);
+            --glass:   rgba(255, 255, 255, 0.08);
             --border:  rgba(255, 255, 255, 0.14);
             --text:    #f0f4f8;
             --radius:  16px;
@@ -29,68 +30,95 @@
             background: var(--surface); backdrop-filter: blur(14px);
             border: 1px solid var(--border); border-radius: 100px;
             padding: 8px 20px; font-size: 13px; font-weight: 600;
-            color: var(--text); white-space: nowrap; pointer-events: none;
-            z-index: 100; letter-spacing: 0.02em; max-width: 90vw;
+            color: var(--cyan); white-space: nowrap; pointer-events: none;
+            z-index: 100; max-width: 90vw; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         /* ── Spinner ── */
         #spinner {
             display: none; position: fixed; inset: 0; align-items: center;
-            justify-content: center; z-index: 200; background: rgba(0,0,0,0.35);
+            justify-content: center; z-index: 200; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
         }
         #spinner.active { display: flex; }
         .spin-ring {
-            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
-            border-top-color: var(--green); border-radius: 50%; animation: spin 0.9s linear infinite;
+            width: 48px; height: 48px; border: 4px solid rgba(0,229,255,0.2);
+            border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.9s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Item menu (Giữ nguyên thanh ngang) ── */
-        #item-menu {
-            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            display: none; background: var(--surface); backdrop-filter: blur(18px);
-            border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 10px 12px; z-index: 90; overflow-x: auto; max-width: 92vw;
-            scrollbar-width: none; gap: 8px; align-items: center;
+        /* ── Menu Toggle Button (Góc Phải) ── */
+        .menu-toggle-btn {
+            position: fixed; top: 15px; right: 15px; z-index: 95;
+            background: var(--surface); border: 1px solid var(--cyan); color: white;
+            padding: 10px 16px; border-radius: 8px; font-family: inherit; font-weight: 600; 
+            cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        #item-menu::-webkit-scrollbar { display: none; }
 
-        .item-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--glass); border: 1.5px solid var(--border);
-            color: var(--text); padding: 9px 16px; margin: 0 3px;
-            border-radius: 10px; font-weight: 600; font-size: 13px;
-            cursor: pointer; white-space: nowrap; outline: none; transition: 0.2s;
+        /* ── Right Sidebar ── */
+        #right-sidebar {
+            position: fixed; top: 0; right: 0; width: 300px; max-width: 85vw; height: 100vh;
+            background: rgba(11, 20, 38, 0.95); backdrop-filter: blur(15px);
+            border-left: 1px solid var(--border); z-index: 110;
+            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
         }
-        .item-btn.active { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); }
+        #right-sidebar.open { transform: translateX(0); }
+
+        .sidebar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px; border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header h3 { font-size: 16px; margin: 0; color: var(--text); }
+        .icon-btn { background: none; border: none; color: white; font-size: 18px; cursor: pointer; padding: 5px; }
+
+        #sidebar-content { flex: 1; overflow-y: auto; padding: 15px; }
+        #sidebar-content::-webkit-scrollbar { display: none; }
+
+        /* Giao diện danh mục */
+        .cat-item {
+            background: var(--glass); padding: 15px; margin-bottom: 10px; border-radius: 10px;
+            cursor: pointer; display: flex; justify-content: space-between; border: 1px solid var(--border);
+            font-weight: 600; font-size: 14px; transition: background 0.2s;
+        }
+        .cat-item:active { background: rgba(255,255,255,0.15); }
+
+        /* Giao diện lưới đồ vật */
+        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .model-card {
+            background: var(--glass); border-radius: 10px; overflow: hidden; cursor: pointer;
+            border: 1px solid var(--border); text-align: center; transition: transform 0.1s;
+        }
+        .model-card:active { transform: scale(0.95); }
+        .model-card img { width: 100%; height: 80px; object-fit: cover; background: #fff; }
+        .model-card div { padding: 8px; font-size: 12px; font-weight: 600; color: var(--text); }
 
         /* ── Edit panel ── */
         #edit-panel {
             position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            display: none; background: var(--surface); backdrop-filter: blur(20px);
-            border: 1px solid var(--border); border-radius: var(--radius);
+            display: none; background: rgba(18, 35, 67, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid var(--cyan); border-radius: var(--radius);
             padding: 18px 20px 16px; z-index: 90; width: min(90vw, 420px);
             max-height: 75vh; overflow-y: auto;
         }
 
         .panel-title {
             font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
-            text-transform: uppercase; color: rgba(255,255,255,0.45);
+            text-transform: uppercase; color: var(--cyan);
             margin-bottom: 16px; text-align: center;
         }
 
         .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); width: 45px; flex-shrink: 0; }
+        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); width: 45px; flex-shrink: 0; }
         .slider-value { font-size: 11px; font-weight: 700; color: var(--green); width: 36px; text-align: right; flex-shrink: 0; }
         input[type=range] { flex-grow: 1; accent-color: var(--green); height: 4px; }
 
         .btn-row { display: flex; gap: 10px; margin-top: 8px; }
         .act-btn {
             flex: 1; padding: 12px; font-weight: 700; font-size: 14px;
-            border: none; border-radius: 10px; cursor: pointer;
+            border: none; border-radius: 10px; cursor: pointer; color: white;
         }
-        #btn-delete { background: var(--red); color: #fff; }
-        #btn-done   { background: var(--green); color: #fff; }
+        #btn-delete { background: var(--red); }
+        #btn-done   { background: var(--green); }
 
         #ARButton {
             position: fixed !important; bottom: 28px !important; left: 50% !important;
@@ -102,13 +130,18 @@
 </head>
 <body>
 
-<div id="status-bar">Đang khởi động AR & Tải dữ liệu...</div>
+<div id="status-bar">Đang khởi động & Tải dữ liệu...</div>
 <div id="spinner"><div class="spin-ring"></div></div>
 
-<div id="item-menu">
-    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">
-        <span style="font-size: 16px;">🏠</span> Phòng 3D
-    </button>
+<button id="btn-toggle-menu" class="menu-toggle-btn">☰ Menu</button>
+
+<div id="right-sidebar">
+    <div class="sidebar-header">
+        <button id="btn-back-cat" class="icon-btn" style="display: none;">⬅</button>
+        <h3 id="sidebar-title">Danh Mục</h3>
+        <button id="btn-close-menu" class="icon-btn">✖</button>
+    </div>
+    <div id="sidebar-content"></div>
 </div>
 
 <div id="edit-panel">
@@ -192,6 +225,9 @@ let uiTouched = false;
 let uiLockTime = 0; 
 let pinchActive = false, pinchInitDist = 0, pinchInitScale = 1;
 
+let categoryDisplayNames = {};
+let modelDatabase = {};
+
 init();
 setupUI();
 setupGestures();
@@ -215,7 +251,7 @@ async function init() {
     }));
 
     const geo = new THREE.RingGeometry(0.08, 0.13, 36).rotateX(-Math.PI / 2);
-    reticle = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide }));
+    reticle = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide }));
     reticle.matrixAutoUpdate = false;
     reticle.visible = false;
     scene.add(reticle);
@@ -229,52 +265,94 @@ async function init() {
         renderer.setSize(innerWidth, innerHeight);
     });
 
-    // Tải dữ liệu Firebase sau khi init AR
     await fetchFromFirebase();
-    
-    // Bắt đầu render loop
     renderer.setAnimationLoop(renderLoop);
 }
 
-// --- LOGIC LẤY DỮ LIỆU FIREBASE VÀ ĐƯA VÀO MENU NGANG ---
+// --- LOGIC FIREBASE VÀ RENDER SIDEBAR ---
 async function fetchFromFirebase() {
     try {
-        const modelSnapshot = await getDocs(collection(db, "models"));
-        const menuContainer = document.getElementById('item-menu');
-        
-        modelSnapshot.forEach(doc => {
-            const data = doc.data();
-            
-            // Tạo nút bấm cho mỗi model
-            const btn = document.createElement('button');
-            btn.className = 'item-btn';
-            btn.dataset.model = data.url;
-            
-            // Gắn hình ảnh thumbnail kèm tên
-            btn.innerHTML = `<img src="${data.image}" style="width: 18px; height: 18px; border-radius: 4px; object-fit: cover;">&nbsp;${data.name}`;
-            
-            // Gắn sự kiện chọn vật thể
-            btn.addEventListener('pointerdown', (e) => {
-                e.stopPropagation(); 
-                uiLockTime = Date.now();
-                
-                document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); 
-                currentModelPath = btn.dataset.model;
-                
-                if (activeObject) closeEditMode();
-                setStatus('Chạm vòng xanh để đặt vật phẩm.');
-            });
-
-            // Thêm nút vào menu
-            menuContainer.appendChild(btn);
+        // Lấy danh mục
+        const catSnapshot = await getDocs(collection(db, "categories"));
+        catSnapshot.forEach(doc => {
+            categoryDisplayNames[doc.id] = doc.data().name;
         });
 
-        setStatus('Đã tải xong dữ liệu. Quét sàn để bắt đầu!');
+        // Lấy vật thể
+        const modelSnapshot = await getDocs(collection(db, "models"));
+        modelSnapshot.forEach(doc => {
+            const data = doc.data();
+            const cat = data.category || "khac";
+            if (!modelDatabase[cat]) modelDatabase[cat] = [];
+            modelDatabase[cat].push({ name: data.name, url: data.url, image: data.image });
+        });
+
+        renderCategories();
+        setStatus('Sẵn sàng! Hãy quét sàn và chọn đồ vật.');
     } catch (e) {
         console.error("Lỗi Firebase:", e);
-        setStatus('❌ Lỗi kết nối dữ liệu Firebase.');
+        setStatus('❌ Lỗi kết nối máy chủ.');
     }
+}
+
+function renderCategories() {
+    const content = document.getElementById('sidebar-content');
+    document.getElementById('sidebar-title').innerText = "Danh Mục";
+    document.getElementById('btn-back-cat').style.display = "none";
+    content.innerHTML = "";
+
+    // Thêm nút cố định cho Phòng 3D
+    const roomBtn = document.createElement('div');
+    roomBtn.className = 'cat-item';
+    roomBtn.style.borderColor = "var(--cyan)";
+    roomBtn.innerHTML = `<span>🏠 Thiết Lập Phòng Ảo</span>`;
+    roomBtn.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); uiLockTime = Date.now();
+        // ĐƯỜNG DẪN MẶC ĐỊNH CỦA PHÒNG
+        currentModelPath = "models/PHONGVE3D.glb"; 
+        
+        document.getElementById('right-sidebar').classList.remove('open');
+        if (activeObject) closeEditMode();
+        setStatus("Quét sàn thật để đặt Phòng.");
+    });
+    content.appendChild(roomBtn);
+
+    // Duyệt danh mục từ Firebase
+    Object.keys(categoryDisplayNames).forEach(id => {
+        const btn = document.createElement('div');
+        btn.className = 'cat-item';
+        btn.innerHTML = `<span>📁 ${categoryDisplayNames[id]}</span> <span style="color:var(--cyan)">❯</span>`;
+        btn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation(); uiLockTime = Date.now();
+            renderItems(id);
+        });
+        content.appendChild(btn);
+    });
+}
+
+function renderItems(catId) {
+    const content = document.getElementById('sidebar-content');
+    document.getElementById('sidebar-title').innerText = categoryDisplayNames[catId];
+    document.getElementById('btn-back-cat').style.display = "block";
+    
+    content.innerHTML = '<div class="items-grid"></div>';
+    const grid = content.firstChild;
+
+    (modelDatabase[catId] || []).forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'model-card';
+        card.innerHTML = `<img src="${item.image}"><div>${item.name}</div>`;
+        card.addEventListener('pointerdown', (e) => {
+            e.stopPropagation(); uiLockTime = Date.now();
+            
+            currentModelPath = item.url;
+            document.getElementById('right-sidebar').classList.remove('open');
+            if (activeObject) closeEditMode();
+            
+            setStatus(`Chạm vòng xanh để đặt: ${item.name}`);
+        });
+        grid.appendChild(card);
+    });
 }
 
 // --- XỬ LÝ CHỌN VÀ ĐẶT VẬT THỂ ---
@@ -366,12 +444,10 @@ function placeModel(path) {
             rb.min.z += rs.z * 0.05; rb.max.z -= rs.z * 0.05;
             mainRoom.userData.roomBox = rb;
 
-            el('btn-room').style.display = 'none';
             currentModelPath = null;
-            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
             setStatus('Phòng đã đặt! Trỏ vào bề mặt ảo để đặt nội thất.');
         } else {
-            setStatus('Chạm vật để sửa, hoặc chọn vật khác để đặt tiếp.');
+            setStatus('Chạm vật để sửa, hoặc mở Menu chọn vật khác.');
         }
         showSpinner(false);
     }, undefined, () => { setStatus('❌ Lỗi tải model.'); showSpinner(false); });
@@ -386,29 +462,27 @@ function openEditMode(obj) {
     const rz = Math.round(THREE.MathUtils.radToDeg(model.rotation.z));
     const offsetY = model.position.y - model.userData.baseY;
 
-    el('sl-rotate-x').value = rx; el('val-rotate-x').textContent = rx + '°';
-    el('sl-rotate-y').value = ry; el('val-rotate-y').textContent = ry + '°';
-    el('sl-rotate-z').value = rz; el('val-rotate-z').textContent = rz + '°';
-    el('sl-height').value = offsetY; el('val-height').textContent = offsetY.toFixed(2) + 'm';
-    el('sl-scale').value = obj.scale.x; el('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
+    document.getElementById('sl-rotate-x').value = rx; document.getElementById('val-rotate-x').textContent = rx + '°';
+    document.getElementById('sl-rotate-y').value = ry; document.getElementById('val-rotate-y').textContent = ry + '°';
+    document.getElementById('sl-rotate-z').value = rz; document.getElementById('val-rotate-z').textContent = rz + '°';
+    document.getElementById('sl-height').value = offsetY; document.getElementById('val-height').textContent = offsetY.toFixed(2) + 'm';
+    document.getElementById('sl-scale').value = obj.scale.x; document.getElementById('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
 
-    el('edit-panel').style.display = 'block';
-    el('item-menu').style.display  = 'none';
+    document.getElementById('edit-panel').style.display = 'block';
     setStatus('Chỉnh sửa góc xoay, hoặc nâng/đẩy vật khỏi bề mặt');
 }
 
 function closeEditMode() {
     activeObject = null;
     uiLockTime = Date.now();
-    el('edit-panel').style.display = 'none';
-    el('item-menu').style.display  = 'flex';
+    document.getElementById('edit-panel').style.display = 'none';
     setStatus('Chạm không gian để đặt · Chạm vật để chỉnh sửa');
 }
 
 function deleteActive() {
     if (!activeObject) return;
     if (activeObject === mainRoom) {
-        mainRoom = null; el('btn-room').style.display = 'inline-flex';
+        mainRoom = null; 
         setStatus('Đã xóa phòng. Quét sàn thật để đặt lại.');
     }
     
@@ -425,53 +499,61 @@ function deleteActive() {
 
 // --- SETUP UI (BẢO VỆ CHỐNG TRÀN SỰ KIỆN) ---
 function setupUI() {
-    [el('item-menu'), el('edit-panel')].forEach(panel => {
+    const panels = [
+        document.getElementById('right-sidebar'), 
+        document.getElementById('edit-panel'), 
+        document.getElementById('btn-toggle-menu')
+    ];
+
+    panels.forEach(panel => {
         panel.addEventListener('beforexrselect', e => { e.preventDefault(); e.stopPropagation(); });
         panel.addEventListener('pointerdown', e => { e.stopPropagation(); uiTouched = true; });
         panel.addEventListener('pointerup', () => { uiTouched = false; });
         panel.addEventListener('pointercancel', () => { uiTouched = false; });
     });
 
-    // Cài đặt nút Phòng 3D tĩnh
-    const btnRoom = document.getElementById('btn-room');
-    if (btnRoom) {
-        btnRoom.addEventListener('pointerdown', (e) => {
-            e.stopPropagation(); uiLockTime = Date.now();
-            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
-            btnRoom.classList.add('active'); 
-            currentModelPath = btnRoom.dataset.model;
-            if (activeObject) closeEditMode();
-            setStatus('Quét sàn thật để đặt Phòng.');
-        });
-    }
+    // Sidebar actions
+    document.getElementById('btn-toggle-menu').addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); uiLockTime = Date.now();
+        document.getElementById('right-sidebar').classList.add('open');
+    });
+    document.getElementById('btn-close-menu').addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); uiLockTime = Date.now();
+        document.getElementById('right-sidebar').classList.remove('open');
+    });
+    document.getElementById('btn-back-cat').addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); uiLockTime = Date.now();
+        renderCategories();
+    });
 
+    // Sliders
     const updateRot = (axis) => (e) => {
         if (!activeObject) return;
         const val = parseFloat(e.target.value);
         activeObject.children[0].rotation[axis] = THREE.MathUtils.degToRad(val);
-        el(`val-rotate-${axis}`).textContent = Math.round(val) + '°';
+        document.getElementById(`val-rotate-${axis}`).textContent = Math.round(val) + '°';
     };
-    el('sl-rotate-x').addEventListener('input', updateRot('x'));
-    el('sl-rotate-y').addEventListener('input', updateRot('y'));
-    el('sl-rotate-z').addEventListener('input', updateRot('z'));
+    document.getElementById('sl-rotate-x').addEventListener('input', updateRot('x'));
+    document.getElementById('sl-rotate-y').addEventListener('input', updateRot('y'));
+    document.getElementById('sl-rotate-z').addEventListener('input', updateRot('z'));
 
-    el('sl-height').addEventListener('input', e => {
+    document.getElementById('sl-height').addEventListener('input', e => {
         if (!activeObject) return;
         const val = parseFloat(e.target.value);
         const model = activeObject.children[0];
         model.position.y = model.userData.baseY + val; 
-        el('val-height').textContent = val.toFixed(2) + 'm';
+        document.getElementById('val-height').textContent = val.toFixed(2) + 'm';
     });
 
-    el('sl-scale').addEventListener('input', e => {
+    document.getElementById('sl-scale').addEventListener('input', e => {
         if (!activeObject) return;
         const s = parseFloat(e.target.value);
         activeObject.scale.setScalar(s);
-        el('val-scale').textContent = s.toFixed(2) + '×';
+        document.getElementById('val-scale').textContent = s.toFixed(2) + '×';
     });
 
-    el('btn-delete').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); deleteActive(); });
-    el('btn-done').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); closeEditMode(); });
+    document.getElementById('btn-delete').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); deleteActive(); });
+    document.getElementById('btn-done').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); closeEditMode(); });
 }
 
 function setupGestures() {
@@ -486,8 +568,9 @@ function setupGestures() {
         const ratio = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY) / pinchInitDist;
         const newScale = Math.max(0.01, Math.min(pinchInitScale * ratio, 20));
         activeObject.scale.setScalar(newScale);
-        if (el('sl-scale') && parseFloat(el('sl-scale').max) >= newScale) {
-            el('sl-scale').value = newScale; el('val-scale').textContent = newScale.toFixed(2) + '×';
+        const slScale = document.getElementById('sl-scale');
+        if (slScale && parseFloat(slScale.max) >= newScale) {
+            slScale.value = newScale; document.getElementById('val-scale').textContent = newScale.toFixed(2) + '×';
         }
     }, { passive: false });
     document.body.addEventListener('touchend', e => { if (e.touches.length < 2) pinchActive = false; }, { passive: true });
@@ -510,7 +593,7 @@ function renderLoop(timestamp, frame) {
                 const results = frame.getHitTestResults(hitTestSource);
                 if (results.length > 0) {
                     reticle.visible = true; reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
-                    if (!planeFound) { planeFound = true; el('item-menu').style.display = 'flex'; setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước."); }
+                    if (!planeFound) { planeFound = true; setStatus("Đã thấy sàn! Mở Menu để đặt Phòng hoặc Đồ vật."); }
                 } else reticle.visible = false;
             }
         } else {
@@ -547,11 +630,11 @@ function renderLoop(timestamp, frame) {
 
 function onSessionEnd() {
     hitTestSourceRequested = false; hitTestSource = null; planeFound = false; mainRoom = null;
-    el('item-menu').style.display = 'none'; el('edit-panel').style.display = 'none';
+    document.getElementById('right-sidebar').classList.remove('open'); 
+    document.getElementById('edit-panel').style.display = 'none';
 }
-function el(id) { return document.getElementById(id); }
-function setStatus(msg) { el('status-bar').textContent = msg; }
-function showSpinner(on) { el('spinner').classList.toggle('active', on); }
+function setStatus(msg) { document.getElementById('status-bar').textContent = msg; }
+function showSpinner(on) { document.getElementById('spinner').classList.toggle('active', on); }
 function findWrapper(mesh) { let node = mesh; while (node) { if (placedObjects.includes(node)) return node; node = node.parent; } return null; }
 </script>
 </body>
