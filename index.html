@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR – Nội Thất 3D</title>
+    <title>WebAR – Nội Thất 3D Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -12,143 +12,92 @@
             --green:   #22c55e;
             --red:     #ef4444;
             --surface: rgba(10, 12, 18, 0.85);
-            --glass:   rgba(255, 255, 255, 0.08);
+            --glass:   rgba(255, 255, 255, 0.10);
             --border:  rgba(255, 255, 255, 0.14);
             --text:    #f0f4f8;
             --radius:  16px;
         }
 
         body {
-            overflow: hidden; touch-action: none;
-            font-family: 'Be Vietnam Pro', sans-serif;
+            overflow: hidden; touch-action: none; font-family: 'Be Vietnam Pro', sans-serif;
             background: #000; color: var(--text);
         }
 
-        /* Status bar */
+        /* ── Status bar ── */
         #status-bar {
             position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
             background: var(--surface); backdrop-filter: blur(14px);
             border: 1px solid var(--border); border-radius: 100px;
             padding: 8px 20px; font-size: 13px; font-weight: 600;
             color: var(--text); white-space: nowrap; pointer-events: none;
-            z-index: 100; max-width: 72vw; overflow: hidden; text-overflow: ellipsis;
+            z-index: 100; letter-spacing: 0.02em; max-width: 90vw;
         }
 
-        /* Spinner */
+        /* ── Spinner ── */
         #spinner {
-            display: none; position: fixed; inset: 0;
-            align-items: center; justify-content: center;
-            z-index: 200; background: rgba(0,0,0,0.4);
+            display: none; position: fixed; inset: 0; align-items: center;
+            justify-content: center; z-index: 200; background: rgba(0,0,0,0.35);
         }
         #spinner.active { display: flex; }
         .spin-ring {
-            width: 48px; height: 48px;
-            border: 4px solid rgba(255,255,255,0.15);
-            border-top-color: var(--green);
-            border-radius: 50%; animation: spin 0.9s linear infinite;
+            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--green); border-radius: 50%; animation: spin 0.9s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Nút mở sidebar */
-        #menu-toggle {
-            position: fixed; top: 18px; left: 16px;
-            background: var(--surface); backdrop-filter: blur(14px);
-            border: 1px solid var(--border); border-radius: 12px;
-            color: var(--text); font-family: inherit; font-weight: 700;
-            font-size: 13px; padding: 9px 14px; cursor: pointer;
-            z-index: 100; display: none;
+        /* ── Item menu ── */
+        #item-menu {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            display: none; background: var(--surface); backdrop-filter: blur(18px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 10px 12px; z-index: 90; overflow-x: auto; max-width: 92vw;
+            scrollbar-width: none; gap: 8px; align-items: center;
         }
+        #item-menu::-webkit-scrollbar { display: none; }
 
-        /* Sidebar */
-        #sidebar {
-            position: fixed; top: 0; left: -320px; width: 300px; height: 100%;
-            background: var(--surface); backdrop-filter: blur(20px);
-            border-right: 1px solid var(--border);
-            z-index: 150; transition: left 0.32s cubic-bezier(.4,0,.2,1);
-            display: flex; flex-direction: column;
-        }
-        #sidebar.open { left: 0; }
-
-        .sidebar-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 18px 16px; border-bottom: 1px solid var(--border); gap: 10px;
-        }
-        .sidebar-header h3 { font-size: 15px; font-weight: 700; flex: 1; text-align: center; }
-        .icon-btn {
-            background: var(--glass); border: 1px solid var(--border);
-            color: var(--text); border-radius: 8px; padding: 6px 10px;
-            font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 600;
-        }
-        #back-btn { display: none; }
-
-        #menu-content {
-            flex: 1; overflow-y: auto; padding: 12px;
-            scrollbar-width: thin; scrollbar-color: var(--border) transparent;
-        }
-
-        .cat-item {
-            display: flex; align-items: center; justify-content: space-between;
-            background: var(--glass); border: 1px solid var(--border);
-            border-radius: 12px; padding: 14px 16px; margin-bottom: 8px;
-            cursor: pointer; font-weight: 600; font-size: 14px;
-        }
-        .cat-item:active { background: rgba(34,197,94,0.12); border-color: var(--green); }
-
-        .items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .model-card {
+        .item-btn {
+            display: inline-flex; align-items: center; gap: 6px;
             background: var(--glass); border: 1.5px solid var(--border);
-            border-radius: 12px; overflow: hidden; cursor: pointer;
+            color: var(--text); padding: 9px 16px; margin: 0 3px;
+            border-radius: 10px; font-weight: 600; font-size: 13px;
+            cursor: pointer; white-space: nowrap; outline: none;
         }
-        .model-card:active { border-color: var(--green); }
-        .model-card.selected { border-color: var(--green); background: rgba(34,197,94,0.1); }
-        .model-card img { width: 100%; height: 80px; object-fit: cover; display: block; }
-        .model-card .card-name {
-            font-size: 11px; font-weight: 600; padding: 7px 8px;
-            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .item-btn.active { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); }
 
-        /* Phòng 3D — nút cố định đáy sidebar */
-        #room-section { padding: 12px; border-top: 1px solid var(--border); }
-        #btn-room {
-            width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: rgba(34,197,94,0.14); border: 1.5px solid var(--green);
-            color: var(--green); border-radius: 12px; padding: 12px;
-            font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
-        }
-        #btn-room:active  { background: rgba(34,197,94,0.28); }
-        #btn-room:disabled { opacity: 0.4; pointer-events: none; }
-
-        /* Edit panel */
+        /* ── Edit panel ── */
         #edit-panel {
             position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
             display: none; background: var(--surface); backdrop-filter: blur(20px);
             border: 1px solid var(--border); border-radius: var(--radius);
             padding: 18px 20px 16px; z-index: 90; width: min(90vw, 420px);
+            max-height: 75vh; overflow-y: auto;
         }
+
         .panel-title {
             font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
-            text-transform: uppercase; color: rgba(255,255,255,0.4);
+            text-transform: uppercase; color: rgba(255,255,255,0.45);
             margin-bottom: 16px; text-align: center;
         }
+
         .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.55); width: 48px; flex-shrink: 0; }
+        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); width: 45px; flex-shrink: 0; }
         .slider-value { font-size: 11px; font-weight: 700; color: var(--green); width: 36px; text-align: right; flex-shrink: 0; }
         input[type=range] { flex-grow: 1; accent-color: var(--green); height: 4px; }
+
         .btn-row { display: flex; gap: 10px; margin-top: 8px; }
-        .act-btn { flex: 1; padding: 12px; font-family: inherit; font-weight: 700; font-size: 14px; border: none; border-radius: 10px; cursor: pointer; }
+        .act-btn {
+            flex: 1; padding: 12px; font-weight: 700; font-size: 14px;
+            border: none; border-radius: 10px; cursor: pointer;
+        }
         #btn-delete { background: var(--red); color: #fff; }
         #btn-done   { background: var(--green); color: #fff; }
 
-        /* AR Button */
         #ARButton {
             position: fixed !important; bottom: 28px !important; left: 50% !important;
             transform: translateX(-50%) !important; background: var(--green) !important;
             border: none !important; border-radius: 100px !important; color: #fff !important;
-            font-family: inherit !important; font-weight: 700 !important;
-            padding: 14px 36px !important; font-size: 14px !important; z-index: 80 !important;
+            font-weight: 700 !important; padding: 14px 36px !important; z-index: 80 !important;
         }
-
-        .fb-loading { text-align: center; color: rgba(255,255,255,0.4); font-size: 13px; padding: 30px 0; }
     </style>
 </head>
 <body>
@@ -156,49 +105,46 @@
 <div id="status-bar">Đang khởi động AR…</div>
 <div id="spinner"><div class="spin-ring"></div></div>
 
-<button id="menu-toggle">☰ Đồ vật</button>
-
-<div id="sidebar">
-    <div class="sidebar-header">
-        <button class="icon-btn" id="back-btn">← Quay lại</button>
-        <h3 id="menu-title">Danh Mục</h3>
-        <button class="icon-btn" id="close-sidebar-btn">✕</button>
-    </div>
-    <div id="menu-content">
-        <div class="fb-loading">Đang tải dữ liệu Firebase…</div>
-    </div>
-    <div id="room-section">
-        <button id="btn-room">🏠 Đặt Phòng 3D</button>
-    </div>
+<div id="item-menu">
+    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">🏠 Phòng 3D</button>
+    <button class="item-btn" data-model="models/bang.glb">🪑 Bảng</button>
+    <button class="item-btn" data-model="models/bangv.glb">📋 Bảng V</button>
+    <button class="item-btn" data-model="models/BINHCAFE.glb">☕ Bình Cafe</button>
+    <button class="item-btn" data-model="models/gom1.glb">🏺 Gốm 1</button>
+    <button class="item-btn" data-model="models/gom2.glb">🏺 Gốm 2</button>
 </div>
 
 <div id="edit-panel">
     <div class="panel-title">Chỉnh sửa vật thể</div>
+
     <div class="slider-row">
         <span class="slider-label">Xoay X</span>
-        <input type="range" id="sl-rx" min="-180" max="180" value="0" step="1">
-        <span class="slider-value" id="vl-rx">0°</span>
+        <input type="range" id="sl-rotate-x" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-x">0°</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Xoay Y</span>
-        <input type="range" id="sl-ry" min="-180" max="180" value="0" step="1">
-        <span class="slider-value" id="vl-ry">0°</span>
+        <input type="range" id="sl-rotate-y" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-y">0°</span>
     </div>
     <div class="slider-row">
         <span class="slider-label">Xoay Z</span>
-        <input type="range" id="sl-rz" min="-180" max="180" value="0" step="1">
-        <span class="slider-value" id="vl-rz">0°</span>
+        <input type="range" id="sl-rotate-z" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-z">0°</span>
     </div>
+
     <div class="slider-row">
-        <span class="slider-label">Cao</span>
+        <span class="slider-label">Nổi/Cao</span>
         <input type="range" id="sl-height" min="-0.5" max="2.5" step="0.01" value="0">
-        <span class="slider-value" id="vl-height">0m</span>
+        <span class="slider-value" id="val-height">0m</span>
     </div>
+
     <div class="slider-row">
         <span class="slider-label">To</span>
         <input type="range" id="sl-scale" min="0.05" max="5" step="0.01" value="1">
-        <span class="slider-value" id="vl-scale">1×</span>
+        <span class="slider-value" id="val-scale">1×</span>
     </div>
+
     <div class="btn-row">
         <button id="btn-delete" class="act-btn">🗑 Xóa</button>
         <button id="btn-done"   class="act-btn">✓ Xong</button>
@@ -216,67 +162,35 @@
 
 <script type="module">
 import * as THREE from 'three';
-import { ARButton }   from 'three/addons/webxr/ARButton.js';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, getDocs }      from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// ── Firebase ──────────────────────────────────────────────────
-const firebaseConfig = {
-    apiKey:            "AIzaSyCQjyaUgKxHqgfW3aaxsgwxUfOPePCkVVA",
-    authDomain:        "vku-ar-project.firebaseapp.com",
-    projectId:         "vku-ar-project",
-    storageBucket:     "vku-ar-project.firebasestorage.app",
-    messagingSenderId: "595437202444",
-    appId:             "1:595437202444:web:7939802383d326eee75229"
-};
-const fbApp = initializeApp(firebaseConfig);
-const db    = getFirestore(fbApp);
-
-// ── Hằng số ───────────────────────────────────────────────────
-const ROOM_MODEL = 'models/PHONGVE3D.glb';   // phòng từ local models/
-
-// ── Three.js globals ──────────────────────────────────────────
 let renderer, scene, camera, controller, reticle;
-let hitTestSource = null, hitTestSourceRequested = false, planeFound = false;
+let hitTestSource = null, hitTestSourceRequested = false;
+let planeFound = false;
 
-// ── App state ─────────────────────────────────────────────────
-let currentModelPath = null;   // URL firebase hoặc ROOM_MODEL
-const placedObjects  = [];
-let activeObject     = null;
-let mainRoom         = null;
+let currentModelPath = null;
+const placedObjects = [];
+let activeObject = null;
+let mainRoom = null;
 
-const mixerMap   = new Map();
-const clock      = new THREE.Clock();
+const mixerMap = new Map();
+const clock = new THREE.Clock();
 const gltfLoader = new GLTFLoader();
-const raycaster  = new THREE.Raycaster();
+const raycaster = new THREE.Raycaster();
 
-// ── UI shield ─────────────────────────────────────────────────
-let uiTouched  = false;
-let uiLockTime = 0;
-function isUIBlocked() { return uiTouched || (Date.now() - uiLockTime < 600); }
-function lockUI()   { uiTouched = true; uiLockTime = Date.now(); }
-function unlockUI() { uiTouched = false; }
-
-// ── Firebase data ─────────────────────────────────────────────
-let modelDatabase        = {};   // { catId: [{name,url,image}] }
-let categoryDisplayNames = {};   // { catId: "Tên" }
-
-// ── Pinch ─────────────────────────────────────────────────────
+let uiTouched = false;
+let uiLockTime = 0; 
 let pinchActive = false, pinchInitDist = 0, pinchInitScale = 1;
 
-// ──────────────────────────────────────────────────────────────
 init();
 setupUI();
 setupGestures();
 renderer.setAnimationLoop(renderLoop);
-fetchFirebase();   // async, không chặn AR
 
-// ── Init Three.js ─────────────────────────────────────────────
 function init() {
-    scene  = new THREE.Scene();
+    scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 20);
-
     scene.add(new THREE.AmbientLight(0xffffff, 1.8));
     const dir = new THREE.DirectionalLight(0xffffff, 1.6);
     dir.position.set(3, 6, 3);
@@ -289,13 +203,10 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     document.body.appendChild(ARButton.createButton(renderer, {
-        requiredFeatures: ['hit-test'],
-        optionalFeatures: ['dom-overlay'],
-        domOverlay:       { root: document.body }
+        requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay'], domOverlay: { root: document.body }
     }));
 
-    const geo = new THREE.RingGeometry(0.08, 0.13, 36);
-    geo.rotateX(-Math.PI / 2);
+    const geo = new THREE.RingGeometry(0.08, 0.13, 36).rotateX(-Math.PI / 2);
     reticle = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide }));
     reticle.matrixAutoUpdate = false;
     reticle.visible = false;
@@ -306,129 +217,48 @@ function init() {
     scene.add(controller);
 
     window.addEventListener('resize', () => {
-        camera.aspect = innerWidth / innerHeight;
-        camera.updateProjectionMatrix();
+        camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
     });
 }
 
-// ── Firebase ──────────────────────────────────────────────────
-async function fetchFirebase() {
-    try {
-        const catSnap = await getDocs(collection(db, 'categories'));
-        catSnap.forEach(doc => { categoryDisplayNames[doc.id] = doc.data().name || doc.id; });
-
-        const modelSnap = await getDocs(collection(db, 'models'));
-        modelSnap.forEach(doc => {
-            const d   = doc.data();
-            const cat = d.category || 'khac';
-            if (!modelDatabase[cat]) modelDatabase[cat] = [];
-            modelDatabase[cat].push({ name: d.name || 'Vật thể', url: d.url, image: d.image || '' });
-        });
-
-        renderCategories();
-    } catch (err) {
-        console.error('Firebase lỗi:', err);
-        el('menu-content').innerHTML = '<div class="fb-loading">⚠ Không tải được dữ liệu Firebase.</div>';
-    }
-}
-
-// ── Sidebar render ────────────────────────────────────────────
-function renderCategories() {
-    el('menu-title').textContent  = 'Danh Mục';
-    el('back-btn').style.display  = 'none';
-    const content = el('menu-content');
-    content.innerHTML = '';
-
-    if (!Object.keys(categoryDisplayNames).length) {
-        content.innerHTML = '<div class="fb-loading">Chưa có danh mục nào.</div>';
-        return;
-    }
-
-    Object.keys(categoryDisplayNames).forEach(id => {
-        const div = document.createElement('div');
-        div.className = 'cat-item';
-        div.innerHTML = `<span>${categoryDisplayNames[id]}</span><span>›</span>`;
-        div.addEventListener('pointerdown', lockUI);
-        div.addEventListener('pointerup',   unlockUI);
-        div.onclick = () => renderItems(id);
-        content.appendChild(div);
-    });
-}
-
-function renderItems(catId) {
-    el('menu-title').textContent  = categoryDisplayNames[catId] || catId;
-    el('back-btn').style.display  = 'block';
-    const content = el('menu-content');
-    content.innerHTML = '<div class="items-grid"></div>';
-    const grid = content.firstChild;
-
-    (modelDatabase[catId] || []).forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'model-card';
-        card.innerHTML = `
-            <img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'">
-            <div class="card-name">${item.name}</div>`;
-        card.addEventListener('pointerdown', lockUI);
-        card.addEventListener('pointerup',   unlockUI);
-        card.onclick = () => {
-            document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            currentModelPath = item.url;
-            if (activeObject) closeEditMode();
-            closeSidebar();
-            setStatus(`Chạm vòng xanh để đặt: ${item.name}`);
-        };
-        grid.appendChild(card);
-    });
-}
-
-function closeSidebar() { el('sidebar').classList.remove('open'); }
-
-// ── onSelect (XR tap) ─────────────────────────────────────────
 function onSelect() {
-    if (isUIBlocked()) return;
+    if (uiTouched || (Date.now() - uiLockTime < 300)) return;
     if (!reticle.visible) return;
 
     const mat = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
     raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
 
-    // 1. Chạm vật đã đặt → chọn/bỏ chọn
     const hittable = placedObjects.filter(o => o !== mainRoom);
-    const hits     = raycaster.intersectObjects(hittable, true);
+    const hits = raycaster.intersectObjects(hittable, true);
+    
     if (hits.length > 0) {
         const wrapper = findWrapper(hits[0].object);
         if (wrapper) {
             activeObject === wrapper ? closeEditMode() : openEditMode(wrapper);
-            return;
+            return; 
         }
     }
 
-    // 2. Đang edit → dời vật
     if (activeObject) {
         activeObject.position.setFromMatrixPosition(reticle.matrix);
-        activeObject.position.y += activeObject.userData.offsetY || 0;
+        activeObject.quaternion.setFromRotationMatrix(reticle.matrix);
         setStatus('Đã dời vật. Bấm ✓ Xong để chốt.');
         return;
     }
 
-    // 3. Đặt model mới
-    if (currentModelPath) placeModel(currentModelPath);
+    if (currentModelPath && !activeObject) placeModel(currentModelPath);
 }
 
-// ── Place model ───────────────────────────────────────────────
 function placeModel(path) {
-    // Phòng 3D = dùng file local; vật phẩm = URL firebase
-    const isRoom = (path === ROOM_MODEL);
-
-    showSpinner(true);
-    setStatus('Đang tải mô hình…');
+    const isRoom = path.includes('PHONGVE3D');
+    showSpinner(true); setStatus('Đang tải mô hình…');
 
     gltfLoader.load(path, (gltf) => {
         const model = gltf.scene;
-
-        // Reset hệ trục
+        
+        // Reset hệ trục của model trước khi tính toán
         model.position.set(0, 0, 0);
         model.scale.setScalar(1);
         model.rotation.set(0, 0, 0);
@@ -437,35 +267,39 @@ function placeModel(path) {
         model.traverse(child => {
             if (!child.isMesh) return;
             child.geometry.computeBoundingBox();
-            const mats = Array.isArray(child.material) ? child.material : [child.material];
-            mats.forEach(m => { if (m) m.side = THREE.DoubleSide; });
+            if (child.material) {
+                const mats = Array.isArray(child.material) ? child.material : [child.material];
+                mats.forEach(m => { m.side = THREE.DoubleSide; });
+            }
         });
 
-        // Auto-scale chỉ cho vật phẩm
+        // Tự động thu phóng (Fix lỗi tính toán scale)
         if (!isRoom) {
             const box = new THREE.Box3().setFromObject(model);
-            const sz  = box.getSize(new THREE.Vector3());
-            const max = Math.max(sz.x, sz.y, sz.z);
-            if      (max > 1.0)  model.scale.setScalar(0.5 / max);
+            const size = box.getSize(new THREE.Vector3());
+            const max = Math.max(size.x, size.y, size.z);
+            if (max > 1.0) model.scale.setScalar(0.5 / max);
             else if (max < 0.05) model.scale.setScalar(0.2 / max);
+            
+            // QUAN TRỌNG: Phải update lại ma trận thì Box3 mới lấy đúng đáy sau khi thu nhỏ
             model.updateMatrixWorld(true);
         }
 
-        // Pivot: đáy giữa
         const box2 = new THREE.Box3().setFromObject(model);
         const ctr  = box2.getCenter(new THREE.Vector3());
-        model.position.set(-ctr.x, -box2.min.y, -ctr.z);
-        model.userData.baseY = -box2.min.y;
-
+        
         const wrapper = new THREE.Group();
         wrapper.position.setFromMatrixPosition(reticle.matrix);
-        if (isRoom) wrapper.quaternion.setFromRotationMatrix(reticle.matrix);
-        wrapper.userData.offsetY = 0;
+        wrapper.quaternion.setFromRotationMatrix(reticle.matrix); 
+        
+        // Tính toán độ dời tâm chính xác để mặt đáy vật luôn nằm trên bề mặt
+        model.position.set(-ctr.x, -box2.min.y, -ctr.z);
+        model.userData.baseY = -box2.min.y; 
+
         wrapper.add(model);
         scene.add(wrapper);
         placedObjects.push(wrapper);
 
-        // Animation
         if (gltf.animations?.length) {
             const mixer = new THREE.AnimationMixer(model);
             gltf.animations.forEach(clip => mixer.clipAction(clip).play());
@@ -481,164 +315,129 @@ function placeModel(path) {
             rb.min.z += rs.z * 0.05; rb.max.z -= rs.z * 0.05;
             mainRoom.userData.roomBox = rb;
 
-            el('btn-room').disabled = true;
+            el('btn-room').style.display = 'none';
             currentModelPath = null;
-            setStatus('Phòng đã đặt! Mở menu chọn đồ vật để trang trí.');
+            itemBtns().forEach(b => b.classList.remove('active'));
+            setStatus('Phòng đã đặt! Trỏ vào bề mặt ảo để đặt vật phẩm.');
         } else {
-            setStatus('Chạm vật để chỉnh sửa · Mở menu để chọn vật khác.');
+            setStatus('Chạm vật để sửa, hoặc chọn vật khác để đặt tiếp.');
         }
-
         showSpinner(false);
-    }, undefined, (err) => {
-        console.error(err);
-        setStatus('❌ Lỗi tải model.');
-        showSpinner(false);
-    });
+    }, undefined, () => { setStatus('❌ Lỗi tải model.'); showSpinner(false); });
 }
 
-// ── Edit mode ─────────────────────────────────────────────────
 function openEditMode(obj) {
     activeObject = obj;
-    const model  = obj.children[0];
-    const rx     = Math.round(THREE.MathUtils.radToDeg(model.rotation.x));
-    const ry     = Math.round(THREE.MathUtils.radToDeg(model.rotation.y));
-    const rz     = Math.round(THREE.MathUtils.radToDeg(model.rotation.z));
-    const offY   = obj.userData.offsetY ?? 0;
+    const model = obj.children[0];
+    
+    const rx = Math.round(THREE.MathUtils.radToDeg(model.rotation.x));
+    const ry = Math.round(THREE.MathUtils.radToDeg(model.rotation.y));
+    const rz = Math.round(THREE.MathUtils.radToDeg(model.rotation.z));
+    const offsetY = model.position.y - model.userData.baseY;
 
-    setSlider('sl-rx',     'vl-rx',     rx,       '°');
-    setSlider('sl-ry',     'vl-ry',     ry,       '°');
-    setSlider('sl-rz',     'vl-rz',     rz,       '°');
-    setSlider('sl-height', 'vl-height', offY,     'm', 2);
-    setSlider('sl-scale',  'vl-scale',  obj.scale.x, '×', 2);
+    el('sl-rotate-x').value = rx; el('val-rotate-x').textContent = rx + '°';
+    el('sl-rotate-y').value = ry; el('val-rotate-y').textContent = ry + '°';
+    el('sl-rotate-z').value = rz; el('val-rotate-z').textContent = rz + '°';
+    el('sl-height').value = offsetY; el('val-height').textContent = offsetY.toFixed(2) + 'm';
+    el('sl-scale').value = obj.scale.x; el('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
 
     el('edit-panel').style.display = 'block';
-    setStatus('Kéo thanh để chỉnh · Chụm 2 ngón để phóng to/thu nhỏ');
+    el('item-menu').style.display  = 'none';
+    setStatus('Chỉnh sửa góc xoay, hoặc nâng/đẩy vật khỏi bề mặt');
 }
 
 function closeEditMode() {
     activeObject = null;
-    uiLockTime   = Date.now();
+    uiLockTime = Date.now();
     el('edit-panel').style.display = 'none';
+    el('item-menu').style.display  = 'flex';
     setStatus('Chạm không gian để đặt · Chạm vật để chỉnh sửa');
 }
 
 function deleteActive() {
     if (!activeObject) return;
     if (activeObject === mainRoom) {
-        mainRoom = null;
-        el('btn-room').disabled = false;
+        mainRoom = null; el('btn-room').style.display = 'inline-flex';
         setStatus('Đã xóa phòng. Quét sàn thật để đặt lại.');
     }
+    
     activeObject.traverse(child => {
         if (!child.isMesh) return;
         child.geometry?.dispose();
         const mats = Array.isArray(child.material) ? child.material : [child.material];
         mats.forEach(m => m?.dispose());
     });
-    if (mixerMap.has(activeObject)) {
-        mixerMap.get(activeObject).stopAllAction();
-        mixerMap.delete(activeObject);
-    }
-    scene.remove(activeObject);
-    placedObjects.splice(placedObjects.indexOf(activeObject), 1);
+    if (mixerMap.has(activeObject)) { mixerMap.get(activeObject).stopAllAction(); mixerMap.delete(activeObject); }
+    scene.remove(activeObject); placedObjects.splice(placedObjects.indexOf(activeObject), 1);
     closeEditMode();
 }
 
-// ── UI setup ──────────────────────────────────────────────────
 function setupUI() {
-    // Shield trên sidebar & edit panel
-    [el('sidebar'), el('edit-panel')].forEach(panel => {
+    [el('item-menu'), el('edit-panel')].forEach(panel => {
         panel.addEventListener('beforexrselect', e => { e.preventDefault(); e.stopPropagation(); });
-        panel.addEventListener('pointerdown', e => { e.stopPropagation(); lockUI(); });
-        panel.addEventListener('pointerup',   () => unlockUI());
-        panel.addEventListener('pointercancel', () => unlockUI());
+        panel.addEventListener('pointerdown', e => { e.stopPropagation(); uiTouched = true; });
+        panel.addEventListener('pointerup', () => { uiTouched = false; });
+        panel.addEventListener('pointercancel', () => { uiTouched = false; });
     });
 
-    // Nút mở sidebar
-    el('menu-toggle').addEventListener('pointerdown', lockUI);
-    el('menu-toggle').addEventListener('pointerup',   unlockUI);
-    el('menu-toggle').addEventListener('click', () => el('sidebar').classList.toggle('open'));
-
-    // Đóng sidebar
-    el('close-sidebar-btn').addEventListener('click', closeSidebar);
-
-    // Quay lại danh mục
-    el('back-btn').addEventListener('click', renderCategories);
-
-    // Nút Phòng 3D
-    el('btn-room').addEventListener('pointerdown', lockUI);
-    el('btn-room').addEventListener('pointerup',   unlockUI);
-    el('btn-room').addEventListener('click', () => {
-        lockUI();
-        currentModelPath = ROOM_MODEL;
-        if (activeObject) closeEditMode();
-        closeSidebar();
-        setStatus('Quét sàn thật → chạm vòng xanh để đặt Phòng 3D.');
-    });
-
-    // Sliders xoay
-    ['x','y','z'].forEach(axis => {
-        el(`sl-r${axis}`).addEventListener('input', e => {
-            if (!activeObject) return;
-            const val = parseFloat(e.target.value);
-            activeObject.children[0].rotation[axis] = THREE.MathUtils.degToRad(val);
-            el(`vl-r${axis}`).textContent = Math.round(val) + '°';
+    itemBtns().forEach(btn => {
+        btn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation(); uiLockTime = Date.now();
+            itemBtns().forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); currentModelPath = btn.dataset.model;
+            if (activeObject) closeEditMode();
+            setStatus(currentModelPath.includes('PHONGVE3D') ? 'Quét sàn thật để đặt Phòng.' : 'Chạm vòng xanh để đặt vật phẩm.');
         });
     });
 
-    // Slider cao
+    const updateRot = (axis) => (e) => {
+        if (!activeObject) return;
+        const val = parseFloat(e.target.value);
+        activeObject.children[0].rotation[axis] = THREE.MathUtils.degToRad(val);
+        el(`val-rotate-${axis}`).textContent = Math.round(val) + '°';
+    };
+    el('sl-rotate-x').addEventListener('input', updateRot('x'));
+    el('sl-rotate-y').addEventListener('input', updateRot('y'));
+    el('sl-rotate-z').addEventListener('input', updateRot('z'));
+
     el('sl-height').addEventListener('input', e => {
         if (!activeObject) return;
-        const val   = parseFloat(e.target.value);
+        const val = parseFloat(e.target.value);
         const model = activeObject.children[0];
-        model.position.y = (model.userData.baseY || 0) + val;
-        activeObject.userData.offsetY = val;
-        el('vl-height').textContent = val.toFixed(2) + 'm';
+        model.position.y = model.userData.baseY + val; 
+        el('val-height').textContent = val.toFixed(2) + 'm';
     });
 
-    // Slider scale
     el('sl-scale').addEventListener('input', e => {
         if (!activeObject) return;
         const s = parseFloat(e.target.value);
         activeObject.scale.setScalar(s);
-        el('vl-scale').textContent = s.toFixed(2) + '×';
+        el('val-scale').textContent = s.toFixed(2) + '×';
     });
 
-    // Nút Xóa / Xong
-    el('btn-delete').addEventListener('pointerdown', e => { e.stopPropagation(); lockUI(); });
-    el('btn-delete').addEventListener('click', deleteActive);
-    el('btn-done').addEventListener('pointerdown', e => { e.stopPropagation(); lockUI(); });
-    el('btn-done').addEventListener('click', closeEditMode);
+    el('btn-delete').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); deleteActive(); });
+    el('btn-done').addEventListener('pointerdown', (e) => { e.stopPropagation(); uiLockTime = Date.now(); closeEditMode(); });
 }
 
-// ── Pinch gesture ─────────────────────────────────────────────
 function setupGestures() {
     document.body.addEventListener('touchstart', e => {
         if (uiTouched || !activeObject || e.touches.length !== 2) return;
-        pinchActive    = true;
-        pinchInitDist  = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        pinchActive = true; pinchInitDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         pinchInitScale = activeObject.scale.x;
     }, { passive: true });
-
     document.body.addEventListener('touchmove', e => {
         if (!pinchActive || uiTouched || !activeObject || e.touches.length !== 2) return;
         e.preventDefault();
-        const dist     = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-        const newScale = Math.max(0.01, Math.min(pinchInitScale * (dist / pinchInitDist), 20));
+        const ratio = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY) / pinchInitDist;
+        const newScale = Math.max(0.01, Math.min(pinchInitScale * ratio, 20));
         activeObject.scale.setScalar(newScale);
-        const sl = el('sl-scale');
-        if (newScale <= parseFloat(sl.max)) {
-            sl.value = newScale;
-            el('vl-scale').textContent = newScale.toFixed(2) + '×';
+        if (el('sl-scale') && parseFloat(el('sl-scale').max) >= newScale) {
+            el('sl-scale').value = newScale; el('val-scale').textContent = newScale.toFixed(2) + '×';
         }
     }, { passive: false });
-
-    document.body.addEventListener('touchend', e => {
-        if (e.touches.length < 2) pinchActive = false;
-    }, { passive: true });
+    document.body.addEventListener('touchend', e => { if (e.touches.length < 2) pinchActive = false; }, { passive: true });
 }
 
-// ── Render loop ───────────────────────────────────────────────
 function renderLoop(timestamp, frame) {
     const delta = clock.getDelta();
     mixerMap.forEach(mixer => mixer.update(delta));
@@ -648,31 +447,19 @@ function renderLoop(timestamp, frame) {
         const session  = renderer.xr.getSession();
 
         if (!mainRoom) {
-            // Hit-test sàn thật
             if (!hitTestSourceRequested) {
-                session.requestReferenceSpace('viewer').then(vs => {
-                    session.requestHitTestSource({ space: vs }).then(src => hitTestSource = src);
-                });
-                session.addEventListener('end', onSessionEnd);
-                hitTestSourceRequested = true;
+                session.requestReferenceSpace('viewer').then(vs => { session.requestHitTestSource({ space: vs }).then(src => hitTestSource = src); });
+                session.addEventListener('end', onSessionEnd); hitTestSourceRequested = true;
             }
             if (hitTestSource) {
                 const results = frame.getHitTestResults(hitTestSource);
                 if (results.length > 0) {
-                    reticle.visible = true;
-                    reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
-                    if (!planeFound) {
-                        planeFound = true;
-                        el('menu-toggle').style.display = 'block';
-                        setStatus("Đã thấy sàn! Mở Menu → chọn 'Đặt Phòng 3D' để bắt đầu.");
-                    }
-                } else { reticle.visible = false; }
+                    reticle.visible = true; reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
+                    if (!planeFound) { planeFound = true; el('item-menu').style.display = 'flex'; setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước."); }
+                } else reticle.visible = false;
             }
         } else {
-            // Huỷ hit-test thật để tiết kiệm tài nguyên
             if (hitTestSource) { hitTestSource.cancel?.(); hitTestSource = null; }
-
-            // Raycast lên bề mặt phòng ảo
             const mat = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
             raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
             raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
@@ -684,47 +471,36 @@ function renderLoop(timestamp, frame) {
                 reticle.visible = true;
                 const hitPt = hits[0].point.clone();
                 if (mainRoom.userData.roomBox) hitPt.clamp(mainRoom.userData.roomBox.min, mainRoom.userData.roomBox.max);
-
-                // Pháp tuyến đúng hướng (fix lật tường âm)
+                
+                // Lấy pháp tuyến bề mặt
+                let worldNormal = hits[0].face.normal.clone();
                 const normalMatrix = new THREE.Matrix3().getNormalMatrix(hits[0].object.matrixWorld);
-                let worldNormal = hits[0].face.normal.clone().applyMatrix3(normalMatrix).normalize();
-                if (raycaster.ray.direction.dot(worldNormal) > 0) worldNormal.negate();
+                worldNormal.applyMatrix3(normalMatrix).normalize();
 
-                const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), worldNormal);
-                reticle.matrix.compose(hitPt, q, new THREE.Vector3(1,1,1));
+                // FIX LỖI ÂM TƯỜNG: Lật lại pháp tuyến nếu đập vào "mặt trong" của phòng
+                if (raycaster.ray.direction.dot(worldNormal) > 0) {
+                    worldNormal.negate(); 
+                }
+
+                const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
+                reticle.matrix.compose(hitPt, q, new THREE.Vector3(1, 1, 1));
             } else {
                 reticle.visible = false;
             }
         }
     }
-
     renderer.render(scene, camera);
 }
 
 function onSessionEnd() {
-    hitTestSourceRequested = false; hitTestSource = null;
-    planeFound = false; mainRoom = null;
-    el('menu-toggle').style.display = 'none';
-    el('edit-panel').style.display  = 'none';
-    el('sidebar').classList.remove('open');
-    el('btn-room').disabled = false;
+    hitTestSourceRequested = false; hitTestSource = null; planeFound = false; mainRoom = null;
+    el('item-menu').style.display = 'none'; el('edit-panel').style.display = 'none';
 }
-
-// ── Helpers ───────────────────────────────────────────────────
 function el(id) { return document.getElementById(id); }
+function itemBtns() { return document.querySelectorAll('.item-btn'); }
 function setStatus(msg) { el('status-bar').textContent = msg; }
 function showSpinner(on) { el('spinner').classList.toggle('active', on); }
-
-function findWrapper(mesh) {
-    let node = mesh;
-    while (node) { if (placedObjects.includes(node)) return node; node = node.parent; }
-    return null;
-}
-
-function setSlider(slId, vlId, val, unit, dec = 0) {
-    el(slId).value = val;
-    el(vlId).textContent = (dec > 0 ? parseFloat(val).toFixed(dec) : Math.round(val)) + unit;
-}
+function findWrapper(mesh) { let node = mesh; while (node) { if (placedObjects.includes(node)) return node; node = node.parent; } return null; }
 </script>
 </body>
 </html>
