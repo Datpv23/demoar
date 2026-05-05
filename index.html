@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Khóa Không Gian Phòng</title>
+    <title>WebAR - Khóa Không Gian & Fix Lỗi UI</title>
     <style>
         body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
@@ -34,7 +34,7 @@
     <div id="loading-spinner"></div>
 
     <div id="item-menu">
-        <button class="item-btn" data-model="models/PHONGVE3D.glb">Phòng vẽ 3D</button>
+        <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">Phòng vẽ 3D</button>
         <button class="item-btn" data-model="models/bang.glb">Bảng</button>
         <button class="item-btn" data-model="models/bangv.glb">Bảng V</button>
         <button class="item-btn" data-model="models/BINHCAFE.glb">Bình Cafe</button>
@@ -46,7 +46,7 @@
     </div>
 
     <div id="edit-menu">
-        <div class="edit-title">Chỉnh sửa vật thể</div>
+        <div class="edit-title">Chạm sàn/tường ảo để dời vật</div>
         <div class="slider-row">
             <label>Xoay:</label>
             <input type="range" id="slider-rotate" min="0" max="360" value="0">
@@ -86,7 +86,6 @@
         const placedObjects = [];    
         let activeObject = null;     
 
-        // Biến lưu trữ căn phòng
         let mainRoom = null;
 
         const gltfLoader = new GLTFLoader();
@@ -128,7 +127,6 @@
                 domOverlay: { root: document.body }
             } ) );
 
-            // Vòng ngắm
             const ringGeo = new THREE.RingGeometry( 0.1, 0.15, 32 );
             ringGeo.rotateX( - Math.PI / 2 );
             reticle = new THREE.Mesh(
@@ -152,13 +150,11 @@
         function onSelect() {
             if (!reticle.visible) return;
 
-            // 1. KIỂM TRA CHẠM VÀO ĐỒ VẬT ĐỂ SỬA
             const tempMatrix = new THREE.Matrix4();
             tempMatrix.identity().extractRotation( controller.matrixWorld );
             raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
             raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
-            // Chỉ dò chạm vào đồ nội thất, không chạm vào tường/sàn phòng để tránh nhầm
             const objectsToIntersect = placedObjects.filter(obj => obj !== mainRoom);
             const intersects = raycaster.intersectObjects( objectsToIntersect, true );
 
@@ -178,7 +174,6 @@
                 }
             }
 
-            // 2. DI CHUYỂN VẬT
             if ( activeObject ) {
                 activeObject.position.setFromMatrixPosition( reticle.matrix );
                 const currentOffset = activeObject.userData.offsetY || 0;
@@ -188,9 +183,8 @@
                 return;
             }
 
-            // 3. ĐẶT VẬT / PHÒNG MỚI
             if ( currentModelPath && !activeObject ) {
-                document.getElementById('status-bar').innerText = "Đang tạo không gian...";
+                document.getElementById('status-bar').innerText = "Đang tải...";
                 document.getElementById('loading-spinner').style.display = "block";
                 
                 const isPlacingRoom = currentModelPath.includes('PHONGVE3D');
@@ -204,15 +198,10 @@
                             child.geometry.computeBoundingSphere();
                             child.castShadow = false; 
                             child.receiveShadow = false;
-                            
-                            // FIX MẠNH: Bật render 2 mặt để có thể chạm/nhìn thấy cả từ trong ra ngoài
-                            if (child.material) {
-                                child.material.side = THREE.DoubleSide; 
-                            }
+                            if (child.material) child.material.side = THREE.DoubleSide; 
                         }
                     });
 
-                    // Cân bằng tỷ lệ (Không bóp nhỏ phòng vẽ)
                     const initialBox = new THREE.Box3().setFromObject(model);
                     const size = initialBox.getSize(new THREE.Vector3());
                     const maxDimension = Math.max(size.x, size.y, size.z);
@@ -225,7 +214,6 @@
                         model.scale.set(scaleUp, scaleUp, scaleUp);
                     }
 
-                    // Ép đáy chạm vòng xanh
                     const scaledBox = new THREE.Box3().setFromObject(model);
                     const center = scaledBox.getCenter(new THREE.Vector3());
 
@@ -235,12 +223,10 @@
 
                     const wrapper = new THREE.Group();
                     
-                    // Nếu là đặt đồ đạc trong phòng, giữ cho nó đứng thẳng
                     if (mainRoom && !isPlacingRoom) {
                          const pos = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
                          wrapper.position.copy(pos);
                     } else {
-                         // Nếu là đặt phòng thật, lấy cả góc nghiêng mặt đất
                          wrapper.position.setFromMatrixPosition( reticle.matrix );
                          wrapper.quaternion.setFromRotationMatrix( reticle.matrix );
                     }
@@ -251,12 +237,18 @@
                     scene.add(wrapper);
                     placedObjects.push(wrapper);
 
-                    // Chốt phòng
+                    // LOGIC CHỈ ĐẶT 1 PHÒNG
                     if (isPlacingRoom) {
                         mainRoom = wrapper;
                         document.getElementById('status-bar').innerText = "Đã vào phòng 3D! Trỏ camera lên bàn/tủ ảo để đặt vật phẩm.";
+                        
+                        // Ẩn nút đặt phòng và bỏ chọn nó
+                        const btnRoom = document.getElementById('btn-room');
+                        btnRoom.style.display = 'none';
+                        btnRoom.classList.remove('active');
+                        currentModelPath = null; // Khóa lệnh đặt thêm
                     } else {
-                        document.getElementById('status-bar').innerText = "Chạm nội thất để sửa, hoặc đặt vật khác";
+                        document.getElementById('status-bar').innerText = "Chạm nội thất để sửa, hoặc chọn vật khác để đặt tiếp";
                     }
 
                     if (gltf.animations && gltf.animations.length > 0) {
@@ -274,6 +266,11 @@
         }
 
         function setupUI() {
+            // KHẮC PHỤC LỖI BẤM UI BỊ XUYÊN XUỐNG KHÔNG GIAN 3D
+            const preventARSelect = (e) => { e.preventDefault(); };
+            document.getElementById('item-menu').addEventListener('beforexrselect', preventARSelect);
+            document.getElementById('edit-menu').addEventListener('beforexrselect', preventARSelect);
+
             const itemBtns = document.querySelectorAll('.item-btn');
             itemBtns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -298,7 +295,11 @@
 
             btnDelete.addEventListener('click', () => {
                 if (activeObject) {
-                    if (activeObject === mainRoom) mainRoom = null; 
+                    if (activeObject === mainRoom) {
+                        mainRoom = null; 
+                        document.getElementById('btn-room').style.display = 'inline-block'; // Hiện lại nút phòng
+                        document.getElementById('status-bar').innerText = "Đã xóa phòng. Hệ thống trở về quét mặt sàn thật.";
+                    }
                     
                     scene.remove(activeObject); 
                     activeObject.traverse((child) => {
@@ -312,8 +313,6 @@
                     const index = placedObjects.indexOf(activeObject);
                     if (index > -1) placedObjects.splice(index, 1); 
                     closeEditMode();
-                    
-                    if(!mainRoom) document.getElementById('status-bar').innerText = "Đã xóa phòng. Hệ thống trở về quét mặt sàn thật.";
                 }
             });
 
@@ -380,7 +379,6 @@
             renderer.setSize( window.innerWidth, window.innerHeight );
         }
 
-        // --- VÒNG LẶP RENDER ---
         function animate() {
             renderer.setAnimationLoop( render );
         }
@@ -393,7 +391,6 @@
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
-                // 1. NẾU CHƯA CÓ PHÒNG -> QUÉT MẶT SÀN THẬT
                 if (!mainRoom) {
                     if ( hitTestSourceRequested === false ) {
                         session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
@@ -428,30 +425,22 @@
                         }
                     }
                 } 
-                // 2. NẾU ĐÃ ĐẶT PHÒNG -> QUÉT VÀO TRONG PHÒNG 3D
                 else {
-                    // FIX MẠNH: Dùng Controller (điểm chạm giữa màn hình) thay vì Camera để bắn tia
                     const tempMatrix = new THREE.Matrix4();
                     tempMatrix.identity().extractRotation( controller.matrixWorld );
                     raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
                     raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
 
-                    // Bắn tia quét vào các bức tường/mặt bàn của Phòng 3D
                     const intersects = raycaster.intersectObject(mainRoom, true);
 
                     if (intersects.length > 0) {
                         reticle.visible = true;
-                        
                         const hitPoint = intersects[0].point;
-                        // Chuyển hướng pháp tuyến (normal) của bức tường thành tọa độ thế giới
                         const worldNormal = intersects[0].face.normal.clone().transformDirection(intersects[0].object.matrixWorld).normalize();
                         
-                        // Cập nhật vị trí vòng ngắm xanh 
                         const dummyMatrix = new THREE.Matrix4();
                         const dummyPosition = new THREE.Vector3().copy(hitPoint);
                         const dummyQuaternion = new THREE.Quaternion();
-                        
-                        // Trục chuẩn của vòng ngắm là trục Y (0,1,0)
                         dummyQuaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
                         
                         dummyMatrix.compose(dummyPosition, dummyQuaternion, new THREE.Vector3(1, 1, 1));
