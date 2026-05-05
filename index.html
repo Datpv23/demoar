@@ -3,16 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Đặt & Thu Phóng Nhiều Vật Thể</title>
+    <title>WebAR - Đặt, Thu Phóng, Xoay & Chỉnh Sửa Vật Thể</title>
     <style>
-        body { margin: 0; overflow: hidden; touch-action: none; }
-        #ui-container { position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif; pointer-events: none; z-index: 10; text-shadow: 1px 1px 2px black;}
+        body { margin: 0; overflow: hidden; touch-action: none; font-family: sans-serif; }
+        
+        /* Trạng thái hệ thống */
+        #status-bar { position: absolute; top: 15px; width: 100%; text-align: center; color: white; text-shadow: 1px 1px 2px black; font-weight: bold; pointer-events: none; z-index: 10; }
+
+        /* Danh sách vật phẩm (Chỉ hiện khi tìm thấy mặt phẳng) */
+        #item-menu { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; background: rgba(0, 0, 0, 0.6); padding: 10px; border-radius: 15px; z-index: 10; white-space: nowrap; overflow-x: auto;}
+        .item-btn { background: #fff; border: 2px solid transparent; padding: 10px 20px; margin: 0 5px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .item-btn.active { border-color: #00ff00; background: #e0ffe0; }
+
+        /* Menu chỉnh sửa (Khi click vào vật đã đặt) */
+        #edit-menu { position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%); display: none; background: rgba(255, 255, 255, 0.9); padding: 15px; border-radius: 15px; z-index: 20; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center;}
+        .edit-controls { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .edit-btn { padding: 10px 15px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
+        #btn-delete { background: #ff4d4d; color: white; }
+        #btn-done { background: #4caf50; color: white; }
+        #slider-rotate { width: 150px; }
     </style>
 </head>
 <body>
-    <div id="ui-container">Đang tìm mặt phẳng...</div>
+    <div id="status-bar">Đang tìm mặt phẳng... Di chuyển điện thoại từ từ.</div>
 
-    <!-- Khai báo thư viện Three.js qua CDN -->
+    <!-- UI Chọn Vật Phẩm -->
+    <div id="item-menu">
+        <!-- Đường dẫn này sẽ trỏ vào thư mục models/ của bạn -->
+        <button class="item-btn" data-model="models/bang.glb">Vật Phẩm 1</button>
+        <button class="item-btn" data-model="models/Binh_cafe.glb">Vật Phẩm 2</button>
+        <button class="item-btn" data-model="models/mayChieu.glb">Vật Phẩm 3</button>
+        <button class="item-btn" data-model="models/tunho.glb">Vật Phẩm 4</button>
+
+    </div>
+
+    <!-- UI Chỉnh Sửa Vật Phẩm (Xoay, Xóa, Xong) -->
+    <div id="edit-menu">
+        <div style="margin-bottom: 5px; font-size: 14px; font-weight:bold;">Chỉnh sửa vật thể (Dùng 2 ngón để thu phóng)</div>
+        <div class="edit-controls">
+            <button id="btn-delete" class="edit-btn">Xóa</button>
+            <input type="range" id="slider-rotate" min="0" max="360" value="0">
+            <button id="btn-done" class="edit-btn">Xong</button>
+        </div>
+    </div>
+
+    <!-- Import Maps -->
     <script type="importmap">
         {
             "imports": {
@@ -25,19 +60,25 @@
     <script type="module">
         import * as THREE from 'three';
         import { ARButton } from 'three/addons/webxr/ARButton.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-        let container;
-        let camera, scene, renderer;
+        let container, camera, scene, renderer;
         let controller, reticle;
         
         let hitTestSource = null;
         let hitTestSourceRequested = false;
 
-        // Quản lý vật thể
-        const placedObjects = [];
-        let activeObject = null; // Vật thể cuối cùng được đặt để thực hiện thu phóng
+        // Các biến trạng thái dự án
+        let planeFound = false;
+        let currentModelPath = null; // Model đang được chọn trên menu
+        const placedObjects = [];    // Danh sách các vật thể đã đặt trong scene
+        let activeObject = null;     // Vật thể đang được chọn để chỉnh sửa
 
-        // Biến phục vụ cảm ứng (Gestures)
+        // Công cụ
+        const gltfLoader = new GLTFLoader();
+        const raycaster = new THREE.Raycaster();
+        
+        // Cảm ứng
         let initialPinchDistance = 0;
         let initialScale = 1;
 
@@ -49,28 +90,26 @@
             document.body.appendChild( container );
 
             scene = new THREE.Scene();
-
             camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 20 );
 
             const light = new THREE.HemisphereLight( 0xffffff, 0xbbbbff, 3 );
             light.position.set( 0.5, 1, 0.25 );
             scene.add( light );
 
-            // Setup Renderer
             renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
             renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize( window.innerWidth, window.innerHeight );
             renderer.xr.enabled = true;
             container.appendChild( renderer.domElement );
 
-            // Tạo nút bắt đầu AR, yêu cầu tính năng hit-test và dom-overlay (để bắt sự kiện cảm ứng)
+            // Setup AR
             document.body.appendChild( ARButton.createButton( renderer, { 
                 requiredFeatures: ['hit-test'],
                 optionalFeatures: ['dom-overlay'],
                 domOverlay: { root: document.body }
             } ) );
 
-            // Vòng tròn ngắm (Reticle)
+            // Reticle (Vòng ngắm)
             reticle = new THREE.Mesh(
                 new THREE.RingGeometry( 0.15, 0.2, 32 ).rotateX( - Math.PI / 2 ),
                 new THREE.MeshBasicMaterial( { color: 0x00ff00 } )
@@ -79,40 +118,131 @@
             reticle.visible = false;
             scene.add( reticle );
 
-            // Setup Controller cho việc đặt vật thể
             controller = renderer.xr.getController( 0 );
             controller.addEventListener( 'select', onSelect );
             scene.add( controller );
 
-            // Lắng nghe sự kiện cảm ứng cho việc thu phóng
+            setupUI();
             setupGestures();
 
             window.addEventListener( 'resize', onWindowResize );
         }
 
+        // --- XỬ LÝ LƯỚT CHẠM & TƯƠNG TÁC AR ---
         function onSelect() {
-            if ( reticle.visible ) {
-                // Thay thế BoxGeometry này bằng Model .glb xuất từ Blender hoặc 3ds Max của bạn
-                const geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 ); 
-                const material = new THREE.MeshStandardMaterial( { color: Math.random() * 0xffffff } );
-                const mesh = new THREE.Mesh( geometry, material );
+            // 1. RAYCASTER: Kiểm tra xem người dùng có click vào vật thể ĐÃ ĐẶT không
+            const tempMatrix = new THREE.Matrix4();
+            tempMatrix.identity().extractRotation( controller.matrixWorld );
+            raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+            raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+
+            // Quét các vật thể trong mảng placedObjects
+            const intersects = raycaster.intersectObjects( placedObjects, true );
+
+            if ( intersects.length > 0 ) {
+                // Người dùng đã chạm vào một vật thể -> Bật chế độ chỉnh sửa
+                let selectedMesh = intersects[0].object;
                 
-                // Đặt vị trí vật thể tại tọa độ của vòng ngắm
-                mesh.position.setFromMatrixPosition( reticle.matrix );
-                mesh.quaternion.setFromRotationMatrix( reticle.matrix );
+                // Tìm thư mục gốc (Root) của model GLTF thay vì chọn 1 mảnh mesh nhỏ
+                while (selectedMesh.parent && selectedMesh.parent.type !== "Scene" && !placedObjects.includes(selectedMesh)) {
+                    selectedMesh = selectedMesh.parent;
+                }
+
+                openEditMode(selectedMesh);
+                return; // Dừng lại ở đây, không đặt thêm vật thể mới
+            }
+
+            // 2. ĐẶT VẬT THỂ: Nếu không click trúng vật nào, và đang có Reticle + Có chọn Model
+            if ( reticle.visible && currentModelPath && !activeObject ) {
+                document.getElementById('status-bar').innerText = "Đang tải model...";
                 
-                scene.add( mesh );
-                placedObjects.push( mesh );
-                activeObject = mesh; // Gán vật thể vừa tạo làm active object để thao tác
-                
-                document.getElementById('ui-container').innerText = `Đã đặt: ${placedObjects.length} vật thể`;
+                gltfLoader.load(currentModelPath, function(gltf) {
+                    const model = gltf.scene;
+                    
+                    // Lấy vị trí từ vòng ngắm
+                    model.position.setFromMatrixPosition( reticle.matrix );
+                    // Cân chỉnh lại để model đứng thẳng trên mặt phẳng
+                    model.quaternion.setFromRotationMatrix( reticle.matrix );
+                    
+                    // Tuỳ chọn: Giảm kích thước mặc định của model nếu nó quá to
+                    // model.scale.set(0.5, 0.5, 0.5); 
+
+                    scene.add( model );
+                    placedObjects.push( model );
+                    
+                    document.getElementById('status-bar').innerText = "Chạm không gian để đặt, hoặc chạm vật để sửa";
+                }, undefined, function(error) {
+                    console.error("Lỗi khi tải model:", error);
+                    document.getElementById('status-bar').innerText = "Lỗi tải model! Kiểm tra lại đường dẫn.";
+                });
             }
         }
 
+        // --- XỬ LÝ GIAO DIỆN DOM ---
+        function setupUI() {
+            // Nút chọn danh sách vật phẩm
+            const itemBtns = document.querySelectorAll('.item-btn');
+            itemBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Cập nhật giao diện nút
+                    itemBtns.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // Lấy đường dẫn model
+                    currentModelPath = e.target.getAttribute('data-model');
+                    document.getElementById('status-bar').innerText = "Đã chọn vật phẩm. Chạm vào vòng xanh để đặt.";
+                });
+            });
+
+            // Giao diện Chỉnh sửa
+            const btnDelete = document.getElementById('btn-delete');
+            const btnDone = document.getElementById('btn-done');
+            const sliderRotate = document.getElementById('slider-rotate');
+
+            btnDelete.addEventListener('click', () => {
+                if (activeObject) {
+                    scene.remove(activeObject); // Xóa khỏi không gian 3D
+                    const index = placedObjects.indexOf(activeObject);
+                    if (index > -1) placedObjects.splice(index, 1); // Xóa khỏi mảng quản lý
+                    closeEditMode();
+                }
+            });
+
+            btnDone.addEventListener('click', () => {
+                closeEditMode();
+            });
+
+            sliderRotate.addEventListener('input', (e) => {
+                if (activeObject) {
+                    // Xoay quanh trục Y (trục đứng) tính bằng Radian
+                    const rotationValue = THREE.MathUtils.degToRad(e.target.value);
+                    activeObject.rotation.y = rotationValue;
+                }
+            });
+        }
+
+        function openEditMode(object) {
+            activeObject = object;
+            document.getElementById('edit-menu').style.display = 'block';
+            document.getElementById('item-menu').style.display = 'none'; // Ẩn menu chọn đồ
+            document.getElementById('status-bar').innerText = "Chế độ chỉnh sửa";
+            
+            // Đặt lại slider góc xoay khớp với góc hiện tại của vật thể
+            const currentDeg = THREE.MathUtils.radToDeg(activeObject.rotation.y);
+            document.getElementById('slider-rotate').value = currentDeg;
+        }
+
+        function closeEditMode() {
+            activeObject = null;
+            document.getElementById('edit-menu').style.display = 'none';
+            document.getElementById('item-menu').style.display = 'block';
+            document.getElementById('status-bar').innerText = "Chạm không gian để đặt, hoặc chạm vật để sửa";
+        }
+
+        // --- XỬ LÝ GESTURES (Thu Phóng) ---
         function setupGestures() {
             document.body.addEventListener('touchstart', (e) => {
                 if (e.touches.length === 2 && activeObject) {
-                    // Khi chạm 2 ngón, tính khoảng cách ban đầu
                     initialPinchDistance = getDistance(e.touches);
                     initialScale = activeObject.scale.x; 
                 }
@@ -120,20 +250,18 @@
 
             document.body.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 2 && activeObject) {
-                    e.preventDefault(); // Ngăn trình duyệt cuộn trang
+                    e.preventDefault(); 
                     const currentPinchDistance = getDistance(e.touches);
                     const pinchRatio = currentPinchDistance / initialPinchDistance;
                     
-                    // Giới hạn scale để tránh quá to hoặc quá nhỏ
                     let newScale = initialScale * pinchRatio;
-                    newScale = Math.max(0.1, Math.min(newScale, 5.0)); 
+                    newScale = Math.max(0.05, Math.min(newScale, 10.0)); 
                     
                     activeObject.scale.set(newScale, newScale, newScale);
                 }
             }, { passive: false });
         }
 
-        // Hàm tính khoảng cách giữa 2 điểm chạm (Pythagoras)
         function getDistance(touches) {
             const dx = touches[0].pageX - touches[1].pageX;
             const dy = touches[0].pageY - touches[1].pageY;
@@ -146,7 +274,7 @@
             renderer.setSize( window.innerWidth, window.innerHeight );
         }
 
-        // Vòng lặp render chính
+        // --- VÒNG LẶP RENDER & HIT TEST ---
         function animate() {
             renderer.setAnimationLoop( render );
         }
@@ -156,7 +284,6 @@
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
-                // Yêu cầu Hit Test source
                 if ( hitTestSourceRequested === false ) {
                     session.requestReferenceSpace( 'viewer' ).then( function ( referenceSpace ) {
                         session.requestHitTestSource( { space: referenceSpace } ).then( function ( source ) {
@@ -166,20 +293,28 @@
                     session.addEventListener( 'end', function () {
                         hitTestSourceRequested = false;
                         hitTestSource = null;
+                        planeFound = false; // Reset lại khi thoát AR
+                        document.getElementById('item-menu').style.display = 'none';
                     } );
                     hitTestSourceRequested = true;
                 }
 
                 if ( hitTestSource ) {
                     const hitTestResults = frame.getHitTestResults( hitTestSource );
+                    
                     if ( hitTestResults.length > 0 ) {
                         const hit = hitTestResults[ 0 ];
                         reticle.visible = true;
                         reticle.matrix.fromArray( hit.getPose( referenceSpace ).transform.matrix );
-                        document.getElementById('ui-container').innerText = "Chạm để đặt vật thể";
+
+                        // Logic: Chỉ hiển thị danh sách vật phẩm khi LẦN ĐẦU TIÊN nhận diện được sàn
+                        if (!planeFound) {
+                            planeFound = true;
+                            document.getElementById('item-menu').style.display = 'block';
+                            document.getElementById('status-bar').innerText = "Đã tìm thấy sàn. Hãy chọn vật phẩm bên dưới.";
+                        }
                     } else {
                         reticle.visible = false;
-                        document.getElementById('ui-container').innerText = "Di chuyển điện thoại để tìm mặt phẳng...";
                     }
                 }
             }
