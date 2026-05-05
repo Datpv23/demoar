@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR - Khóa Không Gian & Fix UI</title>
+    <title>WebAR - Khóa Căn Phòng & Fix Lỗi Chạm Xuyên UI</title>
     <style>
         body { margin: 0; overflow: hidden; touch-action: none; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
@@ -87,6 +87,9 @@
         let activeObject = null;     
 
         let mainRoom = null;
+        
+        // BIẾN LÁ CHẮN UI
+        let isClickingUI = false;
 
         const gltfLoader = new GLTFLoader();
         const raycaster = new THREE.Raycaster();
@@ -148,7 +151,8 @@
         }
 
         function onSelect() {
-            if (!reticle.visible) return;
+            // LÁ CHẮN KÍCH HOẠT: Nếu đang chạm vào Menu thì từ chối mọi thao tác AR
+            if (!reticle.visible || isClickingUI) return;
 
             const tempMatrix = new THREE.Matrix4();
             tempMatrix.identity().extractRotation( controller.matrixWorld );
@@ -240,17 +244,13 @@
                     if (isPlacingRoom) {
                         mainRoom = wrapper;
                         
-                        // TẠO BỨC TƯỜNG VÔ HÌNH (Bounding Box)
                         mainRoom.updateMatrixWorld(true);
                         const roomBox = new THREE.Box3().setFromObject(mainRoom);
-                        
-                        // Thu hẹp hộp giới hạn lại 5% để không cho đồ vật lọt ra ngoài mép
                         const boxSize = roomBox.getSize(new THREE.Vector3());
                         roomBox.min.x += boxSize.x * 0.05;
                         roomBox.max.x -= boxSize.x * 0.05;
                         roomBox.min.z += boxSize.z * 0.05;
                         roomBox.max.z -= boxSize.z * 0.05;
-                        
                         mainRoom.userData.box = roomBox;
 
                         document.getElementById('status-bar').innerText = "Đã vào phòng 3D! Trỏ camera lên bàn/tủ ảo để đặt vật phẩm.";
@@ -278,10 +278,22 @@
         }
 
         function setupUI() {
-            // FIX LỖI: Chặn click xuyên qua UI xuống không gian AR
-            const preventARSelect = (e) => { e.preventDefault(); };
-            document.getElementById('item-menu').addEventListener('beforexrselect', preventARSelect);
-            document.getElementById('edit-menu').addEventListener('beforexrselect', preventARSelect);
+            // Thiết lập Lá chắn UI
+            const lockAR = () => { isClickingUI = true; };
+            const unlockAR = () => { setTimeout(() => { isClickingUI = false; }, 300); }; // Đợi 300ms để AR bỏ qua nhịp click
+
+            const ui1 = document.getElementById('item-menu');
+            const ui2 = document.getElementById('edit-menu');
+
+            // Bắt mọi thao tác chạm vào Menu
+            [ui1, ui2].forEach(ui => {
+                ui.addEventListener('pointerdown', lockAR);
+                ui.addEventListener('touchstart', lockAR, {passive: true});
+                ui.addEventListener('pointerup', unlockAR);
+                ui.addEventListener('touchend', unlockAR);
+                // Đảm bảo event WebXR bị chặn
+                ui.addEventListener('beforexrselect', (e) => { e.preventDefault(); });
+            });
 
             const itemBtns = document.querySelectorAll('.item-btn');
             itemBtns.forEach(btn => {
@@ -361,6 +373,9 @@
 
         function setupGestures() {
             document.body.addEventListener('touchstart', (e) => {
+                // Không thu phóng nếu đang chạm Menu
+                if (isClickingUI) return; 
+
                 if (e.touches.length === 2 && activeObject) {
                     initialPinchDistance = getDistance(e.touches);
                     initialScale = activeObject.scale.x; 
@@ -368,6 +383,8 @@
             }, { passive: false });
 
             document.body.addEventListener('touchmove', (e) => {
+                if (isClickingUI) return;
+
                 if (e.touches.length === 2 && activeObject) {
                     e.preventDefault(); 
                     const currentPinchDistance = getDistance(e.touches);
@@ -452,7 +469,6 @@
                         
                         const dummyPosition = new THREE.Vector3().copy(hitPoint);
                         
-                        // KÍCH HOẠT TƯỜNG VÔ HÌNH: Ép điểm chạm không được thoát ra ngoài phòng
                         if (mainRoom && mainRoom.userData.box) {
                             dummyPosition.clamp(mainRoom.userData.box.min, mainRoom.userData.box.max);
                         }
