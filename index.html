@@ -3,10 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebAR – Nội Thất 3D</title>
+    <title>WebAR – Nội Thất 3D Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
 
         :root {
             --green:   #22c55e;
@@ -19,100 +23,185 @@
         }
 
         body {
-            overflow: hidden;
-            touch-action: none;
+            overflow: hidden; 
+            touch-action: none; 
             font-family: 'Be Vietnam Pro', sans-serif;
-            background: #000;
+            background: #000; 
             color: var(--text);
         }
 
         /* ── Status bar ── */
         #status-bar {
-            position: fixed; top: 18px; left: 50%; transform: translateX(-50%);
-            background: var(--surface); backdrop-filter: blur(14px);
-            border: 1px solid var(--border); border-radius: 100px;
-            padding: 8px 20px; font-size: 13px; font-weight: 600;
-            color: var(--text); white-space: nowrap; pointer-events: none;
-            z-index: 100; letter-spacing: 0.02em; max-width: 90vw;
-            overflow: hidden; text-overflow: ellipsis; transition: opacity 0.3s;
+            position: fixed; 
+            top: 18px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: var(--surface); 
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--border); 
+            border-radius: 100px;
+            padding: 8px 20px; 
+            font-size: 13px; 
+            font-weight: 600;
+            color: var(--text); 
+            white-space: nowrap; 
+            pointer-events: none;
+            z-index: 100; 
+            letter-spacing: 0.02em; 
+            max-width: 90vw;
         }
 
         /* ── Spinner ── */
         #spinner {
-            display: none; position: fixed; inset: 0; align-items: center;
-            justify-content: center; z-index: 200;
-            background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            align-items: center;
+            justify-content: center; 
+            z-index: 200; 
+            background: rgba(0,0,0,0.35);
         }
         #spinner.active { display: flex; }
+        
         .spin-ring {
-            width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.2);
-            border-top-color: var(--green); border-radius: 50%;
+            width: 48px; 
+            height: 48px; 
+            border: 4px solid rgba(255,255,255,0.2);
+            border-top-color: var(--green); 
+            border-radius: 50%; 
             animation: spin 0.9s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
 
         /* ── Item menu ── */
         #item-menu {
-            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            display: none; background: var(--surface); backdrop-filter: blur(18px);
-            border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 10px 12px; z-index: 90; white-space: nowrap;
-            overflow-x: auto; scroll-behavior: smooth; max-width: 92vw;
-            scrollbar-width: none; gap: 8px; align-items: center;
+            position: fixed; 
+            bottom: 28px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            display: none; 
+            background: var(--surface); 
+            backdrop-filter: blur(18px);
+            border: 1px solid var(--border); 
+            border-radius: var(--radius);
+            padding: 10px 12px; 
+            z-index: 90; 
+            overflow-x: auto; 
+            max-width: 92vw;
+            scrollbar-width: none; 
+            gap: 8px; 
+            align-items: center;
         }
         #item-menu::-webkit-scrollbar { display: none; }
 
         .item-btn {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: var(--glass); border: 1.5px solid var(--border);
-            color: var(--text); padding: 9px 16px; margin: 0 3px;
-            border-radius: 10px; font-family: inherit; font-weight: 600;
-            font-size: 13px; cursor: pointer; transition: all 0.18s;
-            white-space: nowrap; outline: none;
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px;
+            background: var(--glass); 
+            border: 1.5px solid var(--border);
+            color: var(--text); 
+            padding: 9px 16px; 
+            margin: 0 3px;
+            border-radius: 10px; 
+            font-weight: 600; 
+            font-size: 13px;
+            cursor: pointer; 
+            white-space: nowrap; 
+            outline: none;
         }
-        .item-btn:active { transform: scale(0.94); }
-        .item-btn.active {
-            background: rgba(34,197,94,0.18);
-            border-color: var(--green); color: var(--green);
+        .item-btn.active { 
+            background: rgba(34,197,94,0.18); 
+            border-color: var(--green); 
+            color: var(--green); 
         }
-        .item-btn .icon { font-size: 16px; }
 
         /* ── Edit panel ── */
         #edit-panel {
-            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
-            display: none; background: var(--surface); backdrop-filter: blur(20px);
-            border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 18px 20px 16px; z-index: 90; width: min(90vw, 420px);
+            position: fixed; 
+            bottom: 28px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            display: none; 
+            background: var(--surface); 
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border); 
+            border-radius: var(--radius);
+            padding: 18px 20px 16px; 
+            z-index: 90; 
+            width: min(90vw, 420px);
+            max-height: 75vh; 
+            overflow-y: auto;
         }
 
         .panel-title {
-            font-size: 11px; font-weight: 700; letter-spacing: 0.10em;
-            text-transform: uppercase; color: rgba(255,255,255,0.45);
-            margin-bottom: 16px; text-align: center;
+            font-size: 11px; 
+            font-weight: 700; 
+            letter-spacing: 0.10em;
+            text-transform: uppercase; 
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 16px; 
+            text-align: center;
         }
 
-        .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-        .slider-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); width: 36px; flex-shrink: 0; }
-        .slider-value { font-size: 11px; font-weight: 700; color: var(--green); width: 36px; text-align: right; flex-shrink: 0; }
-        input[type=range] { flex-grow: 1; accent-color: var(--green); height: 4px; cursor: pointer; }
+        .slider-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 14px; 
+        }
+        .slider-label { 
+            font-size: 12px; 
+            font-weight: 700; 
+            color: rgba(255,255,255,0.6); 
+            width: 45px; 
+            flex-shrink: 0; 
+        }
+        .slider-value { 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: var(--green); 
+            width: 36px; 
+            text-align: right; 
+            flex-shrink: 0; 
+        }
+        input[type=range] { 
+            flex-grow: 1; 
+            accent-color: var(--green); 
+            height: 4px; 
+        }
 
-        .btn-row { display: flex; gap: 10px; margin-top: 4px; }
+        .btn-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 8px; 
+        }
         .act-btn {
-            flex: 1; padding: 12px; font-family: inherit; font-weight: 700;
-            font-size: 14px; border: none; border-radius: 10px; cursor: pointer;
-            transition: all 0.15s; outline: none;
+            flex: 1; 
+            padding: 12px; 
+            font-weight: 700; 
+            font-size: 14px;
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer;
         }
-        .act-btn:active { transform: scale(0.96); opacity: 0.85; }
         #btn-delete { background: var(--red); color: #fff; }
         #btn-done   { background: var(--green); color: #fff; }
 
-        /* ── AR button override ── */
         #ARButton {
-            position: fixed !important; bottom: 28px !important; left: 50% !important;
-            transform: translateX(-50%) !important; background: var(--green) !important;
-            border: none !important; border-radius: 100px !important; color: #fff !important;
-            font-family: inherit !important; font-size: 14px !important; font-weight: 700 !important;
-            padding: 14px 36px !important; letter-spacing: 0.04em !important; z-index: 80 !important;
+            position: fixed !important; 
+            bottom: 28px !important; 
+            left: 50% !important;
+            transform: translateX(-50%) !important; 
+            background: var(--green) !important;
+            border: none !important; 
+            border-radius: 100px !important; 
+            color: #fff !important;
+            font-weight: 700 !important; 
+            padding: 14px 36px !important; 
+            z-index: 80 !important;
         }
     </style>
 </head>
@@ -122,46 +211,35 @@
 <div id="spinner"><div class="spin-ring"></div></div>
 
 <div id="item-menu">
-    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">
-        <span class="icon">🏠</span>Phòng 3D
-    </button>
-    <button class="item-btn" data-model="models/bang.glb">
-        <span class="icon">🪑</span>Bảng
-    </button>
-    <button class="item-btn" data-model="models/bangv.glb">
-        <span class="icon">📋</span>Bảng V
-    </button>
-    <button class="item-btn" data-model="models/BINHCAFE.glb">
-        <span class="icon">☕</span>Bình Cafe
-    </button>
-    <button class="item-btn" data-model="models/gom1.glb">
-        <span class="icon">🏺</span>Gốm 1
-    </button>
-    <button class="item-btn" data-model="models/gom2.glb">
-        <span class="icon">🏺</span>Gốm 2
-    </button>
-    <button class="item-btn" data-model="models/khoinon.glb">
-        <span class="icon">🔺</span>Khối Nón
-    </button>
-    <button class="item-btn" data-model="models/khoitru.glb">
-        <span class="icon">🔵</span>Khối Trụ
-    </button>
-    <button class="item-btn" data-model="models/khoivuong.glb">
-        <span class="icon">🟫</span>Khối Vuông
-    </button>
+    <button class="item-btn" data-model="models/PHONGVE3D.glb" id="btn-room">🏠 Phòng 3D</button>
+    <button class="item-btn" data-model="models/bang.glb">🪑 Bảng</button>
+    <button class="item-btn" data-model="models/bangv.glb">📋 Bảng V</button>
+    <button class="item-btn" data-model="models/BINHCAFE.glb">☕ Bình Cafe</button>
+    <button class="item-btn" data-model="models/gom1.glb">🏺 Gốm 1</button>
+    <button class="item-btn" data-model="models/gom2.glb">🏺 Gốm 2</button>
 </div>
 
 <div id="edit-panel">
     <div class="panel-title">Chỉnh sửa vật thể</div>
 
     <div class="slider-row">
-        <span class="slider-label">Xoay</span>
-        <input type="range" id="sl-rotate" min="0" max="360" value="0" step="1">
-        <span class="slider-value" id="val-rotate">0°</span>
+        <span class="slider-label">Xoay X</span>
+        <input type="range" id="sl-rotate-x" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-x">0°</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Xoay Y</span>
+        <input type="range" id="sl-rotate-y" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-y">0°</span>
+    </div>
+    <div class="slider-row">
+        <span class="slider-label">Xoay Z</span>
+        <input type="range" id="sl-rotate-z" min="-180" max="180" value="0" step="1">
+        <span class="slider-value" id="val-rotate-z">0°</span>
     </div>
 
     <div class="slider-row">
-        <span class="slider-label">Cao</span>
+        <span class="slider-label">Nổi/Cao</span>
         <input type="range" id="sl-height" min="-0.5" max="2.5" step="0.01" value="0">
         <span class="slider-value" id="val-height">0m</span>
     </div>
@@ -211,7 +289,7 @@ const raycaster = new THREE.Raycaster();
 
 // UI State Fixes
 let uiTouched = false;
-let uiLockTime = 0; // Biến khóa WebXR tạm thời khi bấm UI
+let uiLockTime = 0; 
 
 // Pinch state
 let pinchActive = false;
@@ -232,7 +310,7 @@ renderer.setAnimationLoop(renderLoop);
 function init() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.01, 20);
-
+    
     scene.add(new THREE.AmbientLight(0xffffff, 1.8));
     const dir = new THREE.DirectionalLight(0xffffff, 1.6);
     dir.position.set(3, 6, 3);
@@ -246,13 +324,12 @@ function init() {
 
     document.body.appendChild(
         ARButton.createButton(renderer, {
-            requiredFeatures: ['hit-test'],
-            optionalFeatures: ['dom-overlay'],
+            requiredFeatures: ['hit-test'], 
+            optionalFeatures: ['dom-overlay'], 
             domOverlay: { root: document.body }
         })
     );
 
-    // Reticle
     const geo = new THREE.RingGeometry(0.08, 0.13, 36);
     geo.rotateX(-Math.PI / 2);
     reticle = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide }));
@@ -260,13 +337,12 @@ function init() {
     reticle.visible = false;
     scene.add(reticle);
 
-    // Controller
     controller = renderer.xr.getController(0);
     controller.addEventListener('select', onSelect);
     scene.add(controller);
 
     window.addEventListener('resize', () => {
-        camera.aspect = innerWidth / innerHeight;
+        camera.aspect = innerWidth / innerHeight; 
         camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
     });
@@ -276,16 +352,14 @@ function init() {
 //  XR tap → place / move / select
 // ─────────────────────────────────────────────
 function onSelect() {
-    // FIX: Bỏ qua nếu đang chạm UI hoặc vừa mới bấm UI (khóa 300ms)
+    // Chặn nếu đang bấm giao diện hoặc vừa bấm xong
     if (uiTouched || (Date.now() - uiLockTime < 300)) return;
     if (!reticle.visible) return;
 
-    // Build raycaster từ controller
     const mat = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
     raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
     raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
 
-    // Check hit vật thể (Loại trừ phòng chính)
     const hittable = placedObjects.filter(o => o !== mainRoom);
     const hits = raycaster.intersectObjects(hittable, true);
     
@@ -297,20 +371,18 @@ function onSelect() {
             } else {
                 openEditMode(wrapper);
             }
-            return; // Đã xử lý chọn vật, ngừng chạy lệnh bên dưới
+            return; 
         }
     }
 
-    // Nếu đang chọn 1 vật thể -> Chỉ dời vật thể đó, KHÔNG ĐẶT MỚI
     if (activeObject) {
-        const pos = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
-        activeObject.position.copy(pos);
-        activeObject.position.y += activeObject.userData.offsetY || 0;
+        // Cập nhật vị trí VÀ chiều xoay theo bề mặt
+        activeObject.position.setFromMatrixPosition(reticle.matrix);
+        activeObject.quaternion.setFromRotationMatrix(reticle.matrix);
         setStatus('Đã dời vật. Bấm ✓ Xong để chốt.');
         return;
     }
 
-    // Nếu không có vật nào đang được chọn và đang có Model cần đặt -> Đặt mới
     if (currentModelPath && !activeObject) {
         placeModel(currentModelPath);
     }
@@ -321,23 +393,22 @@ function onSelect() {
 // ─────────────────────────────────────────────
 function placeModel(path) {
     const isRoom = path.includes('PHONGVE3D');
-    showSpinner(true);
+    showSpinner(true); 
     setStatus('Đang tải mô hình…');
 
     gltfLoader.load(path, (gltf) => {
         const model = gltf.scene;
-
+        
         model.traverse(child => {
             if (!child.isMesh) return;
             child.geometry.computeBoundingBox();
-            child.geometry.computeBoundingSphere();
             if (child.material) {
                 const mats = Array.isArray(child.material) ? child.material : [child.material];
                 mats.forEach(m => { m.side = THREE.DoubleSide; });
             }
         });
 
-        // Auto-scale
+        // Auto-scale cho đồ nội thất (bỏ qua phòng)
         if (!isRoom) {
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
@@ -346,21 +417,19 @@ function placeModel(path) {
             else if (max < 0.05) model.scale.setScalar(0.2 / max);
         }
 
-        // Pivot bottom
         const box2 = new THREE.Box3().setFromObject(model);
         const ctr  = box2.getCenter(new THREE.Vector3());
-        model.position.set(-ctr.x, -box2.min.y, -ctr.z);
-
+        
+        // Cấu trúc mới: Wrapper bám sát bề mặt, Model nhận thông số tùy chỉnh
         const wrapper = new THREE.Group();
-        wrapper.userData.offsetY = 0;
-        wrapper.userData.baseScale = model.scale.x;
-
-        if (isRoom) {
-            wrapper.position.setFromMatrixPosition(reticle.matrix);
-            wrapper.quaternion.setFromRotationMatrix(reticle.matrix);
-        } else {
-            wrapper.position.setFromMatrixPosition(reticle.matrix);
-        }
+        wrapper.position.setFromMatrixPosition(reticle.matrix);
+        
+        // Xoay Wrapper áp sát hoàn toàn vào bề mặt mặt sàn/tường/trần
+        wrapper.quaternion.setFromRotationMatrix(reticle.matrix); 
+        
+        // Tâm vật thể đặt ở đáy
+        model.position.set(-ctr.x, -box2.min.y, -ctr.z);
+        model.userData.baseY = -box2.min.y; // Lưu lại đáy gốc để phục vụ chức năng Nâng/Cao
 
         wrapper.add(model);
         scene.add(wrapper);
@@ -381,19 +450,17 @@ function placeModel(path) {
             rb.min.z += rs.z * 0.05; rb.max.z -= rs.z * 0.05;
             mainRoom.userData.roomBox = rb;
 
-            document.getElementById('btn-room').style.display = 'none';
+            el('btn-room').style.display = 'none';
             currentModelPath = null;
             itemBtns().forEach(b => b.classList.remove('active'));
             setStatus('Phòng đã đặt! Trỏ vào bề mặt ảo để đặt vật phẩm.');
         } else {
             setStatus('Chạm vật để sửa, hoặc chọn vật khác để đặt tiếp.');
         }
-
         showSpinner(false);
-    }, undefined, (err) => {
-        console.error(err);
-        setStatus('❌ Lỗi tải model.');
-        showSpinner(false);
+    }, undefined, () => { 
+        setStatus('❌ Lỗi tải model.'); 
+        showSpinner(false); 
     });
 }
 
@@ -402,22 +469,36 @@ function placeModel(path) {
 // ─────────────────────────────────────────────
 function openEditMode(obj) {
     activeObject = obj;
-    const rotDeg = Math.round(THREE.MathUtils.radToDeg(obj.rotation.y) % 360);
-    const offsetY = obj.userData.offsetY ?? 0;
-    const scale   = obj.scale.x;
+    const model = obj.children[0]; // Model thực tế nằm trong wrapper
+    
+    const rx = Math.round(THREE.MathUtils.radToDeg(model.rotation.x));
+    const ry = Math.round(THREE.MathUtils.radToDeg(model.rotation.y));
+    const rz = Math.round(THREE.MathUtils.radToDeg(model.rotation.z));
+    const offsetY = model.position.y - model.userData.baseY;
 
-    el('sl-rotate').value = rotDeg;   el('val-rotate').textContent = rotDeg + '°';
-    el('sl-height').value = offsetY;  el('val-height').textContent = offsetY.toFixed(2) + 'm';
-    el('sl-scale').value  = scale;    el('val-scale').textContent  = scale.toFixed(2) + '×';
+    el('sl-rotate-x').value = rx; 
+    el('val-rotate-x').textContent = rx + '°';
+    
+    el('sl-rotate-y').value = ry; 
+    el('val-rotate-y').textContent = ry + '°';
+    
+    el('sl-rotate-z').value = rz; 
+    el('val-rotate-z').textContent = rz + '°';
+    
+    el('sl-height').value = offsetY; 
+    el('val-height').textContent = offsetY.toFixed(2) + 'm';
+    
+    el('sl-scale').value = obj.scale.x; 
+    el('val-scale').textContent = obj.scale.x.toFixed(2) + '×';
 
     el('edit-panel').style.display = 'block';
     el('item-menu').style.display  = 'none';
-    setStatus('Kéo thanh trượt để chỉnh · Chụm để phóng to/thu nhỏ');
+    setStatus('Chỉnh sửa góc xoay, hoặc nâng/đẩy vật khỏi bề mặt');
 }
 
 function closeEditMode() {
     activeObject = null;
-    uiLockTime = Date.now(); // Khóa XR sau khi bấm Xong
+    uiLockTime = Date.now();
     el('edit-panel').style.display = 'none';
     el('item-menu').style.display  = 'flex';
     setStatus('Chạm không gian để đặt · Chạm vật để chỉnh sửa');
@@ -426,7 +507,7 @@ function closeEditMode() {
 function deleteActive() {
     if (!activeObject) return;
     if (activeObject === mainRoom) {
-        mainRoom = null;
+        mainRoom = null; 
         el('btn-room').style.display = 'inline-flex';
         setStatus('Đã xóa phòng. Quét sàn thật để đặt lại.');
     }
@@ -438,74 +519,88 @@ function deleteActive() {
         mats.forEach(m => m?.dispose());
     });
     
-    if (mixerMap.has(activeObject)) {
-        mixerMap.get(activeObject).stopAllAction();
-        mixerMap.delete(activeObject);
+    if (mixerMap.has(activeObject)) { 
+        mixerMap.get(activeObject).stopAllAction(); 
+        mixerMap.delete(activeObject); 
     }
-    scene.remove(activeObject);
-    placedObjects.splice(placedObjects.indexOf(activeObject), 1);
     
+    scene.remove(activeObject); 
+    placedObjects.splice(placedObjects.indexOf(activeObject), 1);
     closeEditMode();
 }
 
 // ─────────────────────────────────────────────
-//  UI setup (FIXED INPUT BLEEDING)
+//  UI setup
 // ─────────────────────────────────────────────
 function setupUI() {
-    // Lớp bảo vệ (Shield): Chặn tương tác rơi xuống layer AR
     [el('item-menu'), el('edit-panel')].forEach(panel => {
-        panel.addEventListener('beforexrselect', e => {
-            e.preventDefault();
-            e.stopPropagation();
+        panel.addEventListener('beforexrselect', e => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
         });
-        // Bắt sự kiện chạm ngay từ giai đoạn đầu
         panel.addEventListener('pointerdown', e => { 
             e.stopPropagation(); 
             uiTouched = true; 
         });
-        panel.addEventListener('pointerup', () => { uiTouched = false; });
-        panel.addEventListener('pointercancel', () => { uiTouched = false; });
-    });
-
-    // Các nút chọn vật phẩm
-    itemBtns().forEach(btn => {
-        // Dùng pointerdown thay vì click để xử lý ngay lập tức
-        btn.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-            uiLockTime = Date.now(); // Khóa AR
-            
-            itemBtns().forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentModelPath = btn.dataset.model;
-            
-            // Nếu đang sửa vật khác mà bấm chọn model mới thì thoát chế độ sửa
-            if (activeObject) closeEditMode();
-            
-            const isRoom = currentModelPath.includes('PHONGVE3D');
-            setStatus(isRoom 
-                ? 'Quét sàn thật → chạm vòng xanh để đặt Phòng.' 
-                : mainRoom ? 'Trỏ vào bề mặt trong Phòng → chạm để đặt vật.' : 'Chạm vòng xanh để đặt vật phẩm.'
-            );
+        panel.addEventListener('pointerup', () => { 
+            uiTouched = false; 
+        });
+        panel.addEventListener('pointercancel', () => { 
+            uiTouched = false; 
         });
     });
 
-    // Các thanh trượt (Sliders)
-    el('sl-rotate').addEventListener('input', e => {
-        if (!activeObject) return;
-        const deg = parseFloat(e.target.value);
-        activeObject.rotation.y = THREE.MathUtils.degToRad(deg);
-        el('val-rotate').textContent = Math.round(deg) + '°';
+    itemBtns().forEach(btn => {
+        btn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation(); 
+            uiLockTime = Date.now();
+            
+            itemBtns().forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); 
+            currentModelPath = btn.dataset.model;
+            
+            if (activeObject) closeEditMode();
+            
+            if (currentModelPath.includes('PHONGVE3D')) {
+                setStatus('Quét sàn thật để đặt Phòng.');
+            } else {
+                setStatus('Chạm vòng xanh để đặt vật phẩm.');
+            }
+        });
     });
 
+    // Các thanh trượt Xoay (Áp dụng lên Model bên trong)
+    el('sl-rotate-x').addEventListener('input', e => {
+        if (!activeObject) return;
+        const val = parseFloat(e.target.value);
+        activeObject.children[0].rotation.x = THREE.MathUtils.degToRad(val);
+        el('val-rotate-x').textContent = Math.round(val) + '°';
+    });
+
+    el('sl-rotate-y').addEventListener('input', e => {
+        if (!activeObject) return;
+        const val = parseFloat(e.target.value);
+        activeObject.children[0].rotation.y = THREE.MathUtils.degToRad(val);
+        el('val-rotate-y').textContent = Math.round(val) + '°';
+    });
+
+    el('sl-rotate-z').addEventListener('input', e => {
+        if (!activeObject) return;
+        const val = parseFloat(e.target.value);
+        activeObject.children[0].rotation.z = THREE.MathUtils.degToRad(val);
+        el('val-rotate-z').textContent = Math.round(val) + '°';
+    });
+
+    // Chỉnh khoảng cách so với bề mặt (Cao/Nổi)
     el('sl-height').addEventListener('input', e => {
         if (!activeObject) return;
-        const newOff = parseFloat(e.target.value);
-        const delta  = newOff - (activeObject.userData.offsetY || 0);
-        activeObject.position.y += delta;
-        activeObject.userData.offsetY = newOff;
-        el('val-height').textContent = newOff.toFixed(2) + 'm';
+        const val = parseFloat(e.target.value);
+        const model = activeObject.children[0];
+        model.position.y = model.userData.baseY + val; 
+        el('val-height').textContent = val.toFixed(2) + 'm';
     });
 
+    // Scale áp dụng lên toàn Wrapper
     el('sl-scale').addEventListener('input', e => {
         if (!activeObject) return;
         const s = parseFloat(e.target.value);
@@ -513,57 +608,51 @@ function setupUI() {
         el('val-scale').textContent = s.toFixed(2) + '×';
     });
 
-    // Các nút thao tác
-    el('btn-delete').addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        uiLockTime = Date.now();
-        deleteActive();
+    // Nút Xóa / Xong
+    el('btn-delete').addEventListener('pointerdown', (e) => { 
+        e.stopPropagation(); 
+        uiLockTime = Date.now(); 
+        deleteActive(); 
     });
-    el('btn-done').addEventListener('pointerdown', (e) => {
-        e.stopPropagation();
-        uiLockTime = Date.now();
-        closeEditMode();
+    
+    el('btn-done').addEventListener('pointerdown', (e) => { 
+        e.stopPropagation(); 
+        uiLockTime = Date.now(); 
+        closeEditMode(); 
     });
 }
 
 // ─────────────────────────────────────────────
-//  Pinch-to-scale gesture
+//  Gestures (Pinch to scale)
 // ─────────────────────────────────────────────
 function setupGestures() {
     document.body.addEventListener('touchstart', e => {
         if (uiTouched || !activeObject || e.touches.length !== 2) return;
-        pinchActive    = true;
-        pinchInitDist  = touchDist(e.touches);
+        pinchActive = true; 
+        pinchInitDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         pinchInitScale = activeObject.scale.x;
     }, { passive: true });
 
     document.body.addEventListener('touchmove', e => {
         if (!pinchActive || uiTouched || !activeObject || e.touches.length !== 2) return;
         e.preventDefault();
-        const ratio    = touchDist(e.touches) / pinchInitDist;
+        const ratio = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY) / pinchInitDist;
         const newScale = Math.max(0.01, Math.min(pinchInitScale * ratio, 20));
         activeObject.scale.setScalar(newScale);
         
-        const slScale = el('sl-scale');
-        if (slScale && parseFloat(slScale.max) >= newScale) {
-            slScale.value = newScale;
+        if (el('sl-scale') && parseFloat(el('sl-scale').max) >= newScale) {
+            el('sl-scale').value = newScale; 
             el('val-scale').textContent = newScale.toFixed(2) + '×';
         }
     }, { passive: false });
 
-    document.body.addEventListener('touchend', e => {
-        if (e.touches.length < 2) pinchActive = false;
+    document.body.addEventListener('touchend', e => { 
+        if (e.touches.length < 2) pinchActive = false; 
     }, { passive: true });
 }
 
-function touchDist(touches) {
-    const dx = touches[0].pageX - touches[1].pageX;
-    const dy = touches[0].pageY - touches[1].pageY;
-    return Math.hypot(dx, dy);
-}
-
 // ─────────────────────────────────────────────
-//  Render loop
+//  Render Loop
 // ─────────────────────────────────────────────
 function renderLoop(timestamp, frame) {
     const delta = clock.getDelta();
@@ -574,38 +663,34 @@ function renderLoop(timestamp, frame) {
         const session  = renderer.xr.getSession();
 
         if (!mainRoom) {
-            // Hit-test on real floor
             if (!hitTestSourceRequested) {
-                session.requestReferenceSpace('viewer').then(vs => {
-                    session.requestHitTestSource({ space: vs }).then(src => {
-                        hitTestSource = src;
-                    });
+                session.requestReferenceSpace('viewer').then(vs => { 
+                    session.requestHitTestSource({ space: vs }).then(src => hitTestSource = src); 
                 });
-                session.addEventListener('end', onSessionEnd);
+                session.addEventListener('end', onSessionEnd); 
                 hitTestSourceRequested = true;
             }
-
             if (hitTestSource) {
                 const results = frame.getHitTestResults(hitTestSource);
                 if (results.length > 0) {
-                    reticle.visible = true;
+                    reticle.visible = true; 
                     reticle.matrix.fromArray(results[0].getPose(refSpace).transform.matrix);
-                    if (!planeFound) {
-                        planeFound = true;
-                        el('item-menu').style.display = 'flex';
-                        setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước.");
+                    
+                    if (!planeFound) { 
+                        planeFound = true; 
+                        el('item-menu').style.display = 'flex'; 
+                        setStatus("Đã thấy sàn! Chọn 'Phòng 3D' để đặt trước."); 
                     }
                 } else {
                     reticle.visible = false;
                 }
             }
         } else {
-            // Hit-test on virtual room
-            if (hitTestSource) {
-                hitTestSource.cancel?.();
-                hitTestSource = null;
+            if (hitTestSource) { 
+                hitTestSource.cancel?.(); 
+                hitTestSource = null; 
             }
-
+            
             const mat = new THREE.Matrix4().identity().extractRotation(controller.matrixWorld);
             raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
             raycaster.ray.direction.set(0, 0, -1).applyMatrix4(mat);
@@ -616,47 +701,44 @@ function renderLoop(timestamp, frame) {
             if (hits.length > 0) {
                 reticle.visible = true;
                 const hitPt = hits[0].point.clone();
-
+                
                 if (mainRoom.userData.roomBox) {
                     hitPt.clamp(mainRoom.userData.roomBox.min, mainRoom.userData.roomBox.max);
                 }
-
-                const worldNormal = hits[0].face.normal.clone()
-                    .transformDirection(hits[0].object.matrixWorld)
-                    .normalize();
+                
+                // Trích xuất hướng mặt phẳng (pháp tuyến)
+                const worldNormal = hits[0].face.normal.clone().transformDirection(hits[0].object.matrixWorld).normalize();
                 const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), worldNormal);
-                const m = new THREE.Matrix4().compose(hitPt, q, new THREE.Vector3(1, 1, 1));
-                reticle.matrix.copy(m);
+                reticle.matrix.compose(hitPt, q, new THREE.Vector3(1, 1, 1));
             } else {
                 reticle.visible = false;
             }
         }
     }
-
     renderer.render(scene, camera);
 }
 
 function onSessionEnd() {
-    hitTestSourceRequested = false;
-    hitTestSource = null;
-    planeFound = false;
+    hitTestSourceRequested = false; 
+    hitTestSource = null; 
+    planeFound = false; 
     mainRoom = null;
-    el('item-menu').style.display = 'none';
+    el('item-menu').style.display = 'none'; 
     el('edit-panel').style.display = 'none';
 }
 
+// Helpers
 function el(id) { return document.getElementById(id); }
 function itemBtns() { return document.querySelectorAll('.item-btn'); }
 function setStatus(msg) { el('status-bar').textContent = msg; }
 function showSpinner(on) { el('spinner').classList.toggle('active', on); }
-
-function findWrapper(mesh) {
-    let node = mesh;
-    while (node) {
-        if (placedObjects.includes(node)) return node;
-        node = node.parent;
-    }
-    return null;
+function findWrapper(mesh) { 
+    let node = mesh; 
+    while (node) { 
+        if (placedObjects.includes(node)) return node; 
+        node = node.parent; 
+    } 
+    return null; 
 }
 </script>
 </body>
